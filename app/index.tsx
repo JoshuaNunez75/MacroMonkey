@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getAccessToken } from "../lib/foodApi";
+import { searchFoods } from "../lib/foodApi";
 
 const colors = {
   bg: "#0F1115",
@@ -67,14 +67,16 @@ export default function Index() {
           style={styles.testButton}
           onPress={async () => {
             try {
-              const token = await getAccessToken();
-              console.log("TOKEN OK, length:", token.length);
-            } catch (error) {
-              console.log("TOKEN FAILED:", error);
+              const results = await searchFoods("banana");
+              console.log("RESULTS:", results.length);
+              console.log(JSON.stringify(results.slice(0, 3), null, 2));
+            } 
+            catch (error) {
+              console.log("SEARCH FAILED:", error);
             }
           }}
         >
-          <Text style={styles.testButtonText}>Test connection</Text>
+          <Text style={styles.testButtonText}>Test search: banana</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
