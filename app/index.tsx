@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getAccessToken } from "../lib/foodApi";
 
 const colors = {
   bg: "#0F1115",
@@ -62,6 +63,19 @@ export default function Index() {
           <Text style={styles.emptyText}>Nothing logged yet</Text>
           <Text style={styles.emptySub}>Food you add today will show up here</Text>
         </View>
+        <Pressable
+          style={styles.testButton}
+          onPress={async () => {
+            try {
+              const token = await getAccessToken();
+              console.log("TOKEN OK, length:", token.length);
+            } catch (error) {
+              console.log("TOKEN FAILED:", error);
+            }
+          }}
+        >
+          <Text style={styles.testButtonText}>Test connection</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -161,5 +175,17 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: 4,
     textAlign: "center",
+  },
+  testButton: {
+    backgroundColor: colors.calories,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 24,
+  },
+  testButtonText: {
+    color: colors.bg,
+    fontSize: 15,
+    fontWeight: "600",
   },
 });
