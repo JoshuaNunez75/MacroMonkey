@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../lib/colors";
 import { Food, searchFoods } from "../lib/foodApi";
+import { formatGrams } from "../lib/format";
 
 function FoodRow({ food }: { food: Food }) {
     const serving = food.servings[0];
@@ -30,13 +31,13 @@ function FoodRow({ food }: { food: Food }) {
                     {Math.round(serving.calories)} cal
                 </Text>
                 <Text style={[styles.macro, { color: colors.protein }]}>
-                    P {serving.protein.toFixed(1)}g
+                    P {formatGrams(serving.protein)}g
                 </Text>
                 <Text style={[styles.macro, { color: colors.carbs }]}>
-                    C {serving.carbs.toFixed(1)}g
+                    C {formatGrams(serving.carbs)}g
                 </Text>
                 <Text style={[styles.macro, { color: colors.fat }]}>
-                    F {serving.fat.toFixed(1)}g
+                    F {formatGrams(serving.fat)}g
                 </Text>
             </View>
         </View>
