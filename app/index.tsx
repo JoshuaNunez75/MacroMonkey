@@ -69,7 +69,10 @@ export default function Index() {
             try {
               const results = await searchFoods("banana");
               console.log("RESULTS:", results.length);
-              console.log(JSON.stringify(results.slice(0, 3), null, 2));
+              results.slice(0, 5).forEach((food) => {
+                console.log(food.name, "|", food.servings.length, "servings");
+              });
+              console.log(JSON.stringify(results[0], null, 2));
             } 
             catch (error) {
               console.log("SEARCH FAILED:", error);
