@@ -70,6 +70,12 @@ export default function Search() {
         }
     }
 
+    function clearSearch() {
+        setQuery("");
+        setResults(null);
+        setError(null);
+    }
+
     function renderBody() {
         if (loading) {
             return <ActivityIndicator color={colors.calories} style={styles.spinner} />;
@@ -106,17 +112,24 @@ export default function Search() {
                 <View style={styles.headerSpacer} />
             </View>
 
-            <TextInput
-                style={styles.input}
-                value={query}
-                onChangeText={setQuery}
-                onSubmitEditing={runSearch}
-                placeholder="Search for a food"
-                placeholderTextColor={colors.muted}
-                autoFocus
-                autoCorrect={false}
-                returnKeyType="search"
-            />
+            <View style={styles.searchBar}>
+                <TextInput
+                    style={styles.input}
+                    value={query}
+                    onChangeText={setQuery}
+                    onSubmitEditing={runSearch}
+                    placeholder="Search for a food"
+                    placeholderTextColor={colors.muted}
+                    autoFocus
+                    autoCorrect={false}
+                    returnKeyType="search"
+                />
+                {query.length > 0 ? (
+                    <Pressable onPress={clearSearch} hitSlop={10} style={styles.clear}>
+                        <Text style={styles.clearText}>✕</Text>
+                    </Pressable>
+                ) : null}
+            </View>
 
             {renderBody()}
         </SafeAreaView>
@@ -149,15 +162,27 @@ const styles = StyleSheet.create({
     headerSpacer: {
         width: 60,
     },
-    input: {
+    searchBar: {
+        flexDirection: "row",
+        alignItems: "center",
         backgroundColor: colors.card,
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: 12,
         paddingHorizontal: 16,
+    },
+    input: {
+        flex: 1,
         paddingVertical: 14,
         fontSize: 16,
         color: colors.text,
+    },
+    clear: {
+        paddingLeft: 12,
+    },
+    clearText: {
+        color: colors.muted,
+        fontSize: 16,
     },
     spinner: {
         marginTop: 32,
