@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -14,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../lib/colors";
 import { Food, searchFoods } from "../lib/foodApi";
 import { formatGrams } from "../lib/format";
+
+const DEBOUNCE_MS = 400;
 
 function FoodRow({ food }: { food: Food }) {
     const serving = food.servings[0];
@@ -51,41 +53,58 @@ export default function Search() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    async function runSearch() {
+    useEffect(() => {
         const trimmed = query.trim();
+
         if (trimmed === "") {
+            setResults(null);
+            setError(null);
+            setLoading(false);
             return;
         }
 
+        let cancelled = false;
         setLoading(true);
         setError(null);
 
-        try {
-            const found = await searchFoods(trimmed);
-            setResults(found);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : "Something went wrong");
-            setResults([]);
-        } finally {
-            setLoading(false);
-        }
-    }
+        const timer = setTimeout(async () => {
+            try {
+                const found = await searchFoods(trimmed);
+                if (!cancelled) {
+                    setResults(found);
+                }
+            } catch (e) {
+                if (!cancelled) {
+                    setError(e instanceof Error ? e.message : "Something went wrong");
+                    setResults([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        }, DEBOUNCE_MS);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [query]);
 
     function clearSearch() {
         setQuery("");
-        setResults(null);
-        setError(null);
     }
 
     function renderBody() {
-        if (loading) {
-            return <ActivityIndicator color={colors.calories} style={styles.spinner} />;
-        }
         if (error) {
             return <Text style={styles.error}>{error}</Text>;
         }
         if (results === null) {
-            return <Text style={styles.hint}>Search for a food to get started</Text>;
+            return loading ? (
+                <ActivityIndicator color={colors.calories} style={styles.spinner} />
+            ) : (
+                <Text style={styles.hint}>Search for a food to get started</Text>
+            );
         }
         if (results.length === 0) {
             return <Text style={styles.hint}>No results found</Text>;
@@ -118,14 +137,15 @@ export default function Search() {
                     style={styles.input}
                     value={query}
                     onChangeText={setQuery}
-                    onSubmitEditing={runSearch}
                     placeholder="Search for a food"
                     placeholderTextColor={colors.muted}
                     autoFocus
                     autoCorrect={false}
                     returnKeyType="search"
                 />
-                {query.length > 0 ? (
+                {loading ? (
+                    <ActivityIndicator color={colors.muted} style={styles.clear} />
+                ) : query.length > 0 ? (
                     <Pressable onPress={clearSearch} hitSlop={10} style={styles.clear}>
                         <Text style={styles.clearText}>✕</Text>
                     </Pressable>
