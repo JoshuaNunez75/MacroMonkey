@@ -1,19 +1,8 @@
 import { StatusBar } from "expo-status-bar";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { searchFoods } from "../lib/foodApi";
-
-const colors = {
-  bg: "#0F1115",
-  card: "#181B22",
-  border: "#252A34",
-  text: "#F2F4F7",
-  muted: "#8A91A0",
-  calories: "#34D399",
-  protein: "#F87171",
-  carbs: "#FBBF24",
-  fat: "#60A5FA",
-};
+import { useRouter } from "expo-router";
+import { colors } from "../lib/colors";
 
 // PLACEHOLDER - settings will replace this.
 const goals = {
@@ -24,6 +13,8 @@ const goals = {
 };
 
 export default function Index() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="light" />
@@ -63,23 +54,8 @@ export default function Index() {
           <Text style={styles.emptyText}>Nothing logged yet</Text>
           <Text style={styles.emptySub}>Food you add today will show up here</Text>
         </View>
-        <Pressable
-          style={styles.testButton}
-          onPress={async () => {
-            try {
-              const results = await searchFoods("banana");
-              console.log("RESULTS:", results.length);
-              results.slice(0, 5).forEach((food) => {
-                console.log(food.name, "|", food.servings.length, "servings");
-              });
-              console.log(JSON.stringify(results[0], null, 2));
-            } 
-            catch (error) {
-              console.log("SEARCH FAILED:", error);
-            }
-          }}
-        >
-          <Text style={styles.testButtonText}>Test search: banana</Text>
+        <Pressable style={styles.addButton} onPress={() => router.push("/search")}>
+          <Text style={styles.addButtonText}>+ Add food</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -181,14 +157,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: "center",
   },
-  testButton: {
+  addButton: {
     backgroundColor: colors.calories,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 24,
   },
-  testButtonText: {
+  addButtonText: {
     color: colors.bg,
     fontSize: 15,
     fontWeight: "600",
