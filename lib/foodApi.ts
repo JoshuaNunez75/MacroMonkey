@@ -1,5 +1,6 @@
 const TOKEN_URL = "https://oauth.fatsecret.com/connect/token";
 const SEARCH_URL = "https://platform.fatsecret.com/rest/foods/search/v5";
+const AUTOCOMPLETE_URL = "https://platform.fatsecret.com/rest/food/autocomplete/v2";
 
 export type Serving = {
     id: string;
@@ -118,4 +119,36 @@ export async function searchFoods(query: string): Promise<Food[]> {
 
     const list = Array.isArray(raw) ? raw : [raw];
     return list.map(toFood).filter((food) => food.servings.length > 0);
+}
+
+export async function suggestFoods(query: string): Promise<string[]> {
+    const trimmed = query.trim();
+    if (trimmed === "") {
+        return [];
+    }
+
+    const token = await getAccessToken();
+
+    const url = AUTOCOMPLETE_URL + "?expression=" + encodeURIComponent(trimmed) + "&format=json&max_results=6";
+
+    const response = await fetch(url, {
+        headers: { Authorization: "Bearer " + token },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Suggestions failed (${response.status})`);
+    }
+
+    const data = await response.json();
+
+    if (data?.error) {
+        throw new Error(`FatSecret error ${data.error.code}: ${data.error.message}`);
+    }
+
+    const raw = data?.suggestions?.suggestion;
+    if (!raw) {
+        return [];
+    }
+
+    return Array.isArray(raw) ? raw : [raw];
 }

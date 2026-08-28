@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../lib/colors";
-import { Food, searchFoods } from "../lib/foodApi";
+import { Food, searchFoods, suggestFoods } from "../lib/foodApi";
 import { formatGrams } from "../lib/format";
 
 const DEBOUNCE_MS = 400;
@@ -52,6 +52,7 @@ export default function Search() {
     const [results, setResults] = useState<Food[] | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
 
     useEffect(() => {
         const trimmed = query.trim();
@@ -59,6 +60,7 @@ export default function Search() {
         if (trimmed === "") {
             setResults(null);
             setError(null);
+            setSuggestions([]);
             setLoading(false);
             return;
         }
@@ -69,14 +71,19 @@ export default function Search() {
 
         const timer = setTimeout(async () => {
             try {
-                const found = await searchFoods(trimmed);
+                const [found, hints] = await Promise.all([
+                    searchFoods(trimmed),
+                    suggestFoods(trimmed).catch(() => [] as string[]),
+                ]);
                 if (!cancelled) {
                     setResults(found);
+                    setSuggestions(hints);
                 }
             } catch (e) {
                 if (!cancelled) {
                     setError(e instanceof Error ? e.message : "Something went wrong");
                     setResults([]);
+                    setSuggestions([]);
                 }
             } finally {
                 if (!cancelled) {
@@ -120,6 +127,10 @@ export default function Search() {
         );
     }
 
+    const visibleSuggestions = suggestions.filter(
+        (s) => s.toLowerCase() !== query.trim().toLowerCase()
+    );
+
     return (
         <SafeAreaView style={styles.screen}>
             <StatusBar style="light" />
@@ -151,6 +162,20 @@ export default function Search() {
                     </Pressable>
                 ) : null}
             </View>
+
+            {visibleSuggestions.length > 0 ? (
+                <View style={styles.suggestions}>
+                    {visibleSuggestions.map((suggestion) => (
+                        <Pressable
+                            key={suggestion}
+                            style={styles.chip}
+                            onPress={() => setQuery(suggestion)}
+                        >
+                            <Text style={styles.chipText}>{suggestion}</Text>
+                        </Pressable>
+                    ))}
+                </View>
+            ) : null}
 
             {renderBody()}
         </SafeAreaView>
@@ -204,6 +229,24 @@ const styles = StyleSheet.create({
     clearText: {
         color: colors.muted,
         fontSize: 16,
+    },
+    suggestions: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+        marginTop: 12,
+    },
+    chip: {
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+    },
+    chipText: {
+        color: colors.muted,
+        fontSize: 13,
     },
     spinner: {
         marginTop: 32,
