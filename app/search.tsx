@@ -17,11 +17,11 @@ import { formatGrams } from "../lib/format";
 
 const DEBOUNCE_MS = 400;
 
-function FoodRow({ food }: { food: Food }) {
+function FoodRow({ food, onPress }: { food: Food; onPress: () => void }) {
     const serving = food.servings[0];
 
     return (
-        <View style={styles.row}>
+        <Pressable style={styles.row} onPress={onPress}>
             <Text style={styles.rowName} numberOfLines={1}>
                 {food.name}
             </Text>
@@ -42,7 +42,7 @@ function FoodRow({ food }: { food: Food }) {
                     F {formatGrams(serving.fat)}g
                 </Text>
             </View>
-        </View>
+        </Pressable>
     );
 }
 
@@ -120,7 +120,9 @@ export default function Search() {
             <FlatList
                 data={results}
                 keyExtractor={(food) => food.id}
-                renderItem={({ item }) => <FoodRow food={item} />}
+                renderItem={({ item }) => (
+                    <FoodRow food={item} onPress={() => router.push(`/food/${item.id}`)} />
+                )}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={styles.listContent}
             />

@@ -3,14 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { colors } from "../lib/colors";
+import { goals } from "../lib/goals";
 
-// PLACEHOLDER - settings will replace this.
-const goals = {
-  calories: 2200,
-  protein: 165,
-  carbs: 220,
-  fat: 73,
-};
 
 export default function Index() {
   const router = useRouter();
