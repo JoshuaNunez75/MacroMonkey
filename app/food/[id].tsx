@@ -138,11 +138,7 @@ export default function FoodDetail() {
                 {food.brand ? <Text style={styles.brand}>{food.brand}</Text> : null}
 
                 <Text style={styles.label}>Serving</Text>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.chipRow}
-                >
+                <View style={styles.chipRow}>
                     {options.map((option, index) => {
                         const selected = index === servingIndex;
                         return (
@@ -159,7 +155,7 @@ export default function FoodDetail() {
                             </Pressable>
                         );
                     })}
-                </ScrollView>
+                </View>
 
                 <Text style={styles.label}>Amount</Text>
                 <View style={styles.amountRow}>
@@ -205,7 +201,7 @@ export default function FoodDetail() {
                         />
                     </View>
                 </View>
-            </ScrollView>
+            </ScrollView >
         );
     }
 
@@ -264,8 +260,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     chipRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
         gap: 8,
-        paddingRight: 20,
     },
     chip: {
         backgroundColor: colors.card,
@@ -274,6 +271,7 @@ const styles = StyleSheet.create({
         borderRadius: 999,
         paddingHorizontal: 14,
         paddingVertical: 9,
+        maxWidth: "100%",
     },
     chipSelected: {
         backgroundColor: colors.calories,
