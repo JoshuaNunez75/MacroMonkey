@@ -17,10 +17,17 @@ import { formatGrams } from "../../lib/format";
 import { goals } from "../../lib/goals";
 
 function gramOptionFor(food: Food): Serving | null {
-    const base = food.servings.find(
-        (s) => s.metricUnit !== undefined && (s.metricAmount ?? 0) > 0
-    );
+    if (food.servings.length === 0) {
+        return null;
+    }
 
+    const hasMetric = (s: Serving) =>
+        s.metricUnit !== undefined && (s.metricAmount ?? 0) > 0;
+
+    const base = hasMetric(food.servings[0])
+        ? food.servings[0]
+        : food.servings.find(hasMetric);
+        
     const metricAmount = base?.metricAmount;
     if (!base || metricAmount === undefined || metricAmount <= 0) {
         return null;
@@ -30,7 +37,7 @@ function gramOptionFor(food: Food): Serving | null {
 
     return {
         id: "per-metric-unit",
-        description: `1 ${base.metricUnit}`,
+        description: `1 ${base.metricUnit} (per ${base.description})`,
         calories: per(base.calories),
         protein: per(base.protein),
         carbs: per(base.carbs),
