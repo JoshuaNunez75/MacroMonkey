@@ -12,9 +12,33 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../lib/colors";
-import { Food, getFood } from "../../lib/foodApi";
+import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
 import { goals } from "../../lib/goals";
+
+function gramOptionFor(food: Food): Serving | null {
+    const base = food.servings.find(
+        (s) => s.metricUnit !== undefined && (s.metricAmount ?? 0) > 0
+    );
+
+    const metricAmount = base?.metricAmount;
+    if (!base || metricAmount === undefined || metricAmount <= 0) {
+        return null;
+    }
+
+    const per = (value: number) => value / metricAmount;
+
+    return {
+        id: "per-metric-unit",
+        description: `1 ${base.metricUnit}`,
+        calories: per(base.calories),
+        protein: per(base.protein),
+        carbs: per(base.carbs),
+        fat: per(base.fat),
+        metricAmount: 1,
+        metricUnit: base.metricUnit,
+    };
+}
 
 function percentOf(value: number, goal: number) {
     if (goal <= 0) {
@@ -83,7 +107,18 @@ export default function FoodDetail() {
             return <ActivityIndicator color={colors.calories} style={styles.spinner} />;
         }
 
-        const serving = food.servings[servingIndex];
+        const gramOption = gramOptionFor(food);
+        const options = gramOption ? [...food.servings, gramOption] : food.servings;
+        const serving = options[servingIndex] ?? options[0];
+
+        function selectServing(index: number) {
+            setServingIndex(index);
+            if (options[index].id === "per-metric-unit") {
+                setAmount(String(Math.round(food.servings[0].metricAmount ?? 100)));
+            } else {
+                setAmount("1");
+            }
+        }
         const parsed = Number(amount);
         const multiplier = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 
@@ -108,12 +143,12 @@ export default function FoodDetail() {
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.chipRow}
                 >
-                    {food.servings.map((option, index) => {
+                    {options.map((option, index) => {
                         const selected = index === servingIndex;
                         return (
                             <Pressable
                                 key={option.id}
-                                onPress={() => setServingIndex(index)}
+                                onPress={() => selectServing(index)}
                                 style={[styles.chip, selected && styles.chipSelected]}
                             >
                                 <Text
@@ -137,9 +172,8 @@ export default function FoodDetail() {
                     />
                     <Text style={styles.amountUnit}>
                         × {serving.description}
-                        {serving.metricAmount
-                            ? `  (${formatGrams(serving.metricAmount * multiplier)} ${serving.metricUnit})`
-                            : ""}
+                        {serving.metricAmount && serving.id !== "per-metric-unit"
+                            ? `  (${formatGrams(serving.metricAmount * multiplier)} ${serving.metricUnit})` : ""}
                     </Text>
                 </View>
 
