@@ -7,11 +7,41 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../lib/colors";
 import { Food, getFood } from "../../lib/foodApi";
+import { formatGrams } from "../../lib/format";
+import { goals } from "../../lib/goals";
+
+function percentOf(value: number, goal: number) {
+    if (goal <= 0) {
+        return 0;
+    }
+    return Math.round((value / goal) * 100);
+}
+
+function MacroStat({
+    label,
+    value,
+    goal,
+    color,
+}: {
+    label: string;
+    value: number;
+    goal: number;
+    color: string;
+}) {
+    return (
+        <View style={styles.macro}>
+            <Text style={[styles.macroValue, { color }]}>{formatGrams(value)}g</Text>
+            <Text style={styles.macroLabel}>{label}</Text>
+            <Text style={styles.macroPercent}>{percentOf(value, goal)}%</Text>
+        </View>
+    );
+}
 
 export default function FoodDetail() {
     const router = useRouter();
@@ -19,6 +49,8 @@ export default function FoodDetail() {
 
     const [food, setFood] = useState<Food | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [servingIndex, setServingIndex] = useState(0);
+    const [amount, setAmount] = useState("1");
 
     useEffect(() => {
         let cancelled = false;
@@ -50,20 +82,95 @@ export default function FoodDetail() {
         if (food === null) {
             return <ActivityIndicator color={colors.calories} style={styles.spinner} />;
         }
+
+        const serving = food.servings[servingIndex];
+        const parsed = Number(amount);
+        const multiplier = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+
+        const totals = {
+            calories: serving.calories * multiplier,
+            protein: serving.protein * multiplier,
+            carbs: serving.carbs * multiplier,
+            fat: serving.fat * multiplier,
+        };
+
         return (
-            <ScrollView contentContainerStyle={styles.content}>
+            <ScrollView
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
+            >
                 <Text style={styles.name}>{food.name}</Text>
                 {food.brand ? <Text style={styles.brand}>{food.brand}</Text> : null}
 
-                <Text style={styles.debug}>
-                    {food.servings.length} servings loaded
-                </Text>
-                <Text style={styles.debug}>
-                    Default: {food.servings[0].description}
-                </Text>
-                <Text style={styles.debug}>
-                    Sodium: {food.servings[0].sodium ?? "not provided"}
-                </Text>
+                <Text style={styles.label}>Serving</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.chipRow}
+                >
+                    {food.servings.map((option, index) => {
+                        const selected = index === servingIndex;
+                        return (
+                            <Pressable
+                                key={option.id}
+                                onPress={() => setServingIndex(index)}
+                                style={[styles.chip, selected && styles.chipSelected]}
+                            >
+                                <Text
+                                    style={[styles.chipText, selected && styles.chipTextSelected]}
+                                >
+                                    {option.description}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </ScrollView>
+
+                <Text style={styles.label}>Amount</Text>
+                <View style={styles.amountRow}>
+                    <TextInput
+                        style={styles.amountInput}
+                        value={amount}
+                        onChangeText={setAmount}
+                        keyboardType="decimal-pad"
+                        selectTextOnFocus
+                    />
+                    <Text style={styles.amountUnit}>
+                        × {serving.description}
+                        {serving.metricAmount
+                            ? `  (${formatGrams(serving.metricAmount * multiplier)} ${serving.metricUnit})`
+                            : ""}
+                    </Text>
+                </View>
+
+                <View style={styles.card}>
+                    <Text style={styles.calories}>{Math.round(totals.calories)}</Text>
+                    <Text style={styles.caloriesLabel}>calories</Text>
+                    <Text style={styles.percent}>
+                        {percentOf(totals.calories, goals.calories)}% of daily goal
+                    </Text>
+
+                    <View style={styles.macroRow}>
+                        <MacroStat
+                            label="Protein"
+                            value={totals.protein}
+                            goal={goals.protein}
+                            color={colors.protein}
+                        />
+                        <MacroStat
+                            label="Carbs"
+                            value={totals.carbs}
+                            goal={goals.carbs}
+                            color={colors.carbs}
+                        />
+                        <MacroStat
+                            label="Fat"
+                            value={totals.fat}
+                            goal={goals.fat}
+                            color={colors.fat}
+                        />
+                    </View>
+                </View>
             </ScrollView>
         );
     }
@@ -106,17 +213,118 @@ const styles = StyleSheet.create({
         fontSize: 26,
         fontWeight: "700",
         color: colors.text,
-        marginTop: 8,
+        marginTop: 4,
     },
     brand: {
         fontSize: 15,
         color: colors.muted,
         marginTop: 4,
     },
-    debug: {
-        fontSize: 14,
+    label: {
+        fontSize: 13,
+        fontWeight: "600",
         color: colors.muted,
-        marginTop: 12,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+        marginTop: 28,
+        marginBottom: 10,
+    },
+    chipRow: {
+        gap: 8,
+        paddingRight: 20,
+    },
+    chip: {
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 999,
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+    },
+    chipSelected: {
+        backgroundColor: colors.calories,
+        borderColor: colors.calories,
+    },
+    chipText: {
+        color: colors.muted,
+        fontSize: 13,
+    },
+    chipTextSelected: {
+        color: colors.bg,
+        fontWeight: "600",
+    },
+    amountRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    amountInput: {
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 18,
+        color: colors.text,
+        width: 90,
+        textAlign: "center",
+    },
+    amountUnit: {
+        flex: 1,
+        color: colors.muted,
+        fontSize: 14,
+    },
+    card: {
+        backgroundColor: colors.card,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: 24,
+        marginTop: 28,
+        alignItems: "center",
+    },
+    calories: {
+        fontSize: 48,
+        fontWeight: "700",
+        color: colors.calories,
+    },
+    caloriesLabel: {
+        fontSize: 13,
+        color: colors.muted,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+    },
+    percent: {
+        fontSize: 13,
+        color: colors.muted,
+        marginTop: 6,
+    },
+    macroRow: {
+        flexDirection: "row",
+        width: "100%",
+        marginTop: 22,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        paddingTop: 18,
+    },
+    macro: {
+        flex: 1,
+        alignItems: "center",
+    },
+    macroValue: {
+        fontSize: 18,
+        fontWeight: "600",
+    },
+    macroLabel: {
+        fontSize: 12,
+        color: colors.text,
+        marginTop: 3,
+    },
+    macroPercent: {
+        fontSize: 12,
+        color: colors.muted,
+        marginTop: 1,
     },
     spinner: {
         marginTop: 40,
