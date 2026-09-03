@@ -16,6 +16,28 @@ import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
 import { goals } from "../../lib/goals";
 
+const MICRO_FIELDS: {
+    label: string;
+    unit: string;
+    get: (s: Serving) => number | undefined;
+}[] = [
+        { label: "Saturated fat", unit: "g", get: (s) => s.saturatedFat },
+        { label: "Polyunsaturated fat", unit: "g", get: (s) => s.polyunsaturatedFat },
+        { label: "Monounsaturated fat", unit: "g", get: (s) => s.monounsaturatedFat },
+        { label: "Trans fat", unit: "g", get: (s) => s.transFat },
+        { label: "Fiber", unit: "g", get: (s) => s.fiber },
+        { label: "Sugar", unit: "g", get: (s) => s.sugar },
+        { label: "Added sugars", unit: "g", get: (s) => s.addedSugars },
+        { label: "Cholesterol", unit: "mg", get: (s) => s.cholesterol },
+        { label: "Sodium", unit: "mg", get: (s) => s.sodium },
+        { label: "Potassium", unit: "mg", get: (s) => s.potassium },
+        { label: "Calcium", unit: "mg", get: (s) => s.calcium },
+        { label: "Iron", unit: "mg", get: (s) => s.iron },
+        { label: "Vitamin A", unit: "mcg", get: (s) => s.vitaminA },
+        { label: "Vitamin C", unit: "mg", get: (s) => s.vitaminC },
+        { label: "Vitamin D", unit: "mcg", get: (s) => s.vitaminD },
+    ];
+
 function gramOptionFor(food: Food): Serving | null {
     if (food.servings.length === 0) {
         return null;
@@ -27,13 +49,15 @@ function gramOptionFor(food: Food): Serving | null {
     const base = hasMetric(food.servings[0])
         ? food.servings[0]
         : food.servings.find(hasMetric);
-        
+
     const metricAmount = base?.metricAmount;
     if (!base || metricAmount === undefined || metricAmount <= 0) {
         return null;
     }
 
     const per = (value: number) => value / metricAmount;
+    const perOptional = (value: number | undefined) => value === undefined ? undefined : value / metricAmount;
+
 
     return {
         id: "per-metric-unit",
@@ -44,6 +68,22 @@ function gramOptionFor(food: Food): Serving | null {
         fat: per(base.fat),
         metricAmount: 1,
         metricUnit: base.metricUnit,
+
+        saturatedFat: perOptional(base.saturatedFat),
+        polyunsaturatedFat: perOptional(base.polyunsaturatedFat),
+        monounsaturatedFat: perOptional(base.monounsaturatedFat),
+        transFat: perOptional(base.transFat),
+        cholesterol: perOptional(base.cholesterol),
+        sodium: perOptional(base.sodium),
+        potassium: perOptional(base.potassium),
+        fiber: perOptional(base.fiber),
+        sugar: perOptional(base.sugar),
+        addedSugars: perOptional(base.addedSugars),
+        vitaminA: perOptional(base.vitaminA),
+        vitaminC: perOptional(base.vitaminC),
+        vitaminD: perOptional(base.vitaminD),
+        calcium: perOptional(base.calcium),
+        iron: perOptional(base.iron),
     };
 }
 
@@ -82,6 +122,7 @@ export default function FoodDetail() {
     const [error, setError] = useState<string | null>(null);
     const [servingIndex, setServingIndex] = useState(0);
     const [amount, setAmount] = useState("1");
+    const [showMicros, setShowMicros] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -128,6 +169,12 @@ export default function FoodDetail() {
         }
         const parsed = Number(amount);
         const multiplier = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+
+        const visibleMicros = MICRO_FIELDS.map((field) => ({
+            label: field.label,
+            unit: field.unit,
+            value: field.get(serving),
+        })).filter((row) => row.value !== undefined);
 
         const totals = {
             calories: serving.calories * multiplier,
@@ -208,6 +255,32 @@ export default function FoodDetail() {
                         />
                     </View>
                 </View>
+                <Pressable
+                    style={styles.microsHeader}
+                    onPress={() => setShowMicros(!showMicros)}
+                >
+                    <Text style={styles.microsTitle}>Nutrition details</Text>
+                    <Text style={styles.microsToggle}>{showMicros ? "Hide" : "Show"}</Text>
+                </Pressable>
+
+                {showMicros ? (
+                    visibleMicros.length === 0 ? (
+                        <Text style={styles.microsEmpty}>
+                            No additional nutrition data for this food
+                        </Text>
+                    ) : (
+                        <View style={styles.microsBody}>
+                            {visibleMicros.map((row) => (
+                                <View key={row.label} style={styles.microRow}>
+                                    <Text style={styles.microLabel}>{row.label}</Text>
+                                    <Text style={styles.microValue}>
+                                        {formatGrams((row.value ?? 0) * multiplier)} {row.unit}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    )
+                ) : null}
             </ScrollView >
         );
     }
@@ -364,6 +437,54 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: colors.muted,
         marginTop: 1,
+    },
+    microsHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: 28,
+        paddingVertical: 6,
+    },
+    microsTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: colors.text,
+    },
+    microsToggle: {
+        fontSize: 14,
+        color: colors.calories,
+        fontWeight: "600",
+    },
+    microsBody: {
+        backgroundColor: colors.card,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        paddingHorizontal: 16,
+        paddingVertical: 4,
+        marginTop: 8,
+    },
+    microRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: 11,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    microLabel: {
+        fontSize: 14,
+        color: colors.muted,
+    },
+    microValue: {
+        fontSize: 14,
+        color: colors.text,
+        fontWeight: "600",
+    },
+    microsEmpty: {
+        fontSize: 14,
+        color: colors.muted,
+        marginTop: 8,
     },
     spinner: {
         marginTop: 40,
