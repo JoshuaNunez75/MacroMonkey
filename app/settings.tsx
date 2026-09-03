@@ -12,10 +12,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../lib/colors";
 import {
+  ACTIVITY_LEVELS,
+  ActivityKey,
   CALORIES_PER_GRAM,
   DEFAULT_PROFILE,
   loadProfile,
+  maintenanceFor,
+  Profile,
   saveProfile,
+  Sex,
+  suggestedCalories,
 } from "../lib/profile";
 
 type MacroKey = "protein" | "carbs" | "fat";
@@ -31,6 +37,26 @@ const MACRO_COLORS: Record<MacroKey, string> = {
   carbs: colors.carbs,
   fat: colors.fat,
 };
+
+type BodyForm = {
+  sex: Sex;
+  age: string;
+  heightFt: string;
+  heightIn: string;
+  weightLb: string;
+  activity: ActivityKey;
+  weeklyChangeLb: number;
+};
+
+const RATE_OPTIONS = [
+  { value: -1, label: "Gain 1 lb/wk" },
+  { value: -0.5, label: "Gain ½ lb/wk" },
+  { value: 0, label: "Maintain" },
+  { value: 0.5, label: "Lose ½ lb/wk" },
+  { value: 1, label: "Lose 1 lb/wk" },
+  { value: 1.5, label: "Lose 1½ lb/wk" },
+  { value: 2, label: "Lose 2 lb/wk" },
+];
 
 function num(text: string) {
   const parsed = Number(text);
@@ -60,6 +86,16 @@ export default function Settings() {
     fat: { pct: "30", g: "0" },
   });
   const [saving, setSaving] = useState(false);
+  const [showCalc, setShowCalc] = useState(false);
+  const [body, setBody] = useState<BodyForm>({
+    sex: DEFAULT_PROFILE.sex,
+    age: String(DEFAULT_PROFILE.age),
+    heightFt: String(Math.floor(DEFAULT_PROFILE.heightIn / 12)),
+    heightIn: String(DEFAULT_PROFILE.heightIn % 12),
+    weightLb: String(DEFAULT_PROFILE.weightLb),
+    activity: DEFAULT_PROFILE.activity,
+    weeklyChangeLb: DEFAULT_PROFILE.weeklyChangeLb,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +131,16 @@ export default function Settings() {
             Math.round(gramsFor(cals, profile.fatPercent, CALORIES_PER_GRAM.fat))
           ),
         },
+      });
+
+      setBody({
+        sex: profile.sex,
+        age: String(profile.age),
+        heightFt: String(Math.floor(profile.heightIn / 12)),
+        heightIn: String(profile.heightIn % 12),
+        weightLb: String(profile.weightLb),
+        activity: profile.activity,
+        weeklyChangeLb: profile.weeklyChangeLb,
       });
     }
 
@@ -147,17 +193,35 @@ export default function Settings() {
     }));
   }
 
-  const percentSum =
-    num(macros.protein.pct) + num(macros.carbs.pct) + num(macros.fat.pct);
+  const calcProfile: Profile = {
+    ...DEFAULT_PROFILE,
+    sex: body.sex,
+    age: num(body.age),
+    heightIn: num(body.heightFt) * 12 + num(body.heightIn),
+    weightLb: num(body.weightLb),
+    activity: body.activity,
+    weeklyChangeLb: body.weeklyChangeLb,
+  };
+
+  const maintenance = Math.round(maintenanceFor(calcProfile));
+  const suggested = suggestedCalories(calcProfile);
+
+  const percentSum = num(macros.protein.pct) + num(macros.carbs.pct) + num(macros.fat.pct);
   const balanced = Math.abs(percentSum - 100) < 0.5;
 
   async function save() {
     setSaving(true);
-    await saveProfile({
-      calorieGoal: num(calories),
-      proteinPercent: num(macros.protein.pct),
-      carbsPercent: num(macros.carbs.pct),
-      fatPercent: num(macros.fat.pct),
+        await saveProfile({
+        calorieGoal: num(calories),
+        proteinPercent: num(macros.protein.pct),
+        carbsPercent: num(macros.carbs.pct),
+        fatPercent: num(macros.fat.pct),
+        sex: body.sex,
+        age: num(body.age),
+        heightIn: num(body.heightFt) * 12 + num(body.heightIn),
+        weightLb: num(body.weightLb),
+        activity: body.activity,
+        weeklyChangeLb: body.weeklyChangeLb,
     });
     setSaving(false);
     router.back();
@@ -187,6 +251,155 @@ export default function Settings() {
           keyboardType="number-pad"
           selectTextOnFocus
         />
+
+        <Pressable
+          style={styles.calcHeader}
+          onPress={() => setShowCalc(!showCalc)}
+        >
+          <Text style={styles.calcTitle}>Not sure? Work it out</Text>
+          <Text style={styles.calcToggle}>{showCalc ? "Hide" : "Show"}</Text>
+        </Pressable>
+
+        {showCalc ? (
+          <View style={styles.calcBody}>
+            <View style={styles.chipRow}>
+              {(["male", "female"] as Sex[]).map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => setBody({ ...body, sex: option })}
+                  style={[styles.chip, body.sex === option && styles.chipOn]}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      body.sex === option && styles.chipTextOn,
+                    ]}
+                  >
+                    {option === "male" ? "Male" : "Female"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.calcRow}>
+              <Text style={styles.calcLabel}>Age</Text>
+              <View style={styles.field}>
+                <TextInput
+                  style={styles.smallInput}
+                  value={body.age}
+                  onChangeText={(text) => setBody({ ...body, age: text })}
+                  keyboardType="number-pad"
+                  selectTextOnFocus
+                />
+              </View>
+            </View>
+
+            <View style={styles.calcRow}>
+              <Text style={styles.calcLabel}>Height</Text>
+              <View style={styles.field}>
+                <TextInput
+                  style={styles.smallInput}
+                  value={body.heightFt}
+                  onChangeText={(text) => setBody({ ...body, heightFt: text })}
+                  keyboardType="number-pad"
+                  selectTextOnFocus
+                />
+                <Text style={styles.unit}>ft</Text>
+              </View>
+              <View style={styles.field}>
+                <TextInput
+                  style={styles.smallInput}
+                  value={body.heightIn}
+                  onChangeText={(text) => setBody({ ...body, heightIn: text })}
+                  keyboardType="number-pad"
+                  selectTextOnFocus
+                />
+                <Text style={styles.unit}>in</Text>
+              </View>
+            </View>
+
+            <View style={styles.calcRow}>
+              <Text style={styles.calcLabel}>Weight</Text>
+              <View style={styles.field}>
+                <TextInput
+                  style={styles.smallInput}
+                  value={body.weightLb}
+                  onChangeText={(text) => setBody({ ...body, weightLb: text })}
+                  keyboardType="decimal-pad"
+                  selectTextOnFocus
+                />
+                <Text style={styles.unit}>lb</Text>
+              </View>
+            </View>
+
+            <Text style={styles.subLabel}>Activity</Text>
+            <View style={styles.chipRow}>
+              {ACTIVITY_LEVELS.map((level) => (
+                <Pressable
+                  key={level.key}
+                  onPress={() => setBody({ ...body, activity: level.key })}
+                  style={[
+                    styles.chip,
+                    body.activity === level.key && styles.chipOn,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      body.activity === level.key && styles.chipTextOn,
+                    ]}
+                  >
+                    {level.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.subLabel}>Goal</Text>
+            <View style={styles.chipRow}>
+              {RATE_OPTIONS.map((option) => (
+                <Pressable
+                  key={option.label}
+                  onPress={() =>
+                    setBody({ ...body, weeklyChangeLb: option.value })
+                  }
+                  style={[
+                    styles.chip,
+                    body.weeklyChangeLb === option.value && styles.chipOn,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      body.weeklyChangeLb === option.value && styles.chipTextOn,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.calcResult}>
+              Maintenance: {maintenance.toLocaleString()} cal/day
+            </Text>
+            <Text style={styles.calcTarget}>
+              Target: {suggested.toLocaleString()} cal/day
+            </Text>
+
+            <Pressable
+              style={styles.applyButton}
+              onPress={() => updateCalories(String(suggested))}
+            >
+              <Text style={styles.applyButtonText}>Use this as my goal</Text>
+            </Pressable>
+
+            <Text style={styles.disclaimer}>
+              An estimate from the Mifflin-St Jeor formula. Real needs vary —
+              adjust based on what actually happens over a few weeks.
+            </Text>
+          </View>
+        ) : null}
 
         <Text style={styles.label}>Macro split</Text>
 
@@ -319,6 +532,106 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.muted,
     marginLeft: 4,
+  },
+  calcHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 16,
+    paddingVertical: 6,
+  },
+  calcTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  calcToggle: {
+    fontSize: 14,
+    color: colors.calories,
+    fontWeight: "600",
+  },
+  calcBody: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
+    marginTop: 8,
+  },
+  calcRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+    gap: 10,
+  },
+  calcLabel: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text,
+  },
+  subLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    maxWidth: "100%",
+  },
+  chipOn: {
+    backgroundColor: colors.calories,
+    borderColor: colors.calories,
+  },
+  chipText: {
+    color: colors.muted,
+    fontSize: 13,
+  },
+  chipTextOn: {
+    color: colors.bg,
+    fontWeight: "600",
+  },
+  calcResult: {
+    fontSize: 14,
+    color: colors.muted,
+    marginTop: 22,
+  },
+  calcTarget: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: colors.calories,
+    marginTop: 4,
+  },
+  applyButton: {
+    borderWidth: 1,
+    borderColor: colors.calories,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  applyButtonText: {
+    color: colors.calories,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  disclaimer: {
+    fontSize: 12,
+    color: colors.muted,
+    marginTop: 14,
+    lineHeight: 17,
   },
   sum: {
     fontSize: 13,
