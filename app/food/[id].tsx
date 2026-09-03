@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../lib/colors";
 import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
+import { MICRO_FIELDS } from "../../lib/nutrients";
 import { addEntry, getEntry, todayKey, updateEntry } from "../../lib/diary";
 import {
     DEFAULT_PROFILE,
@@ -21,28 +22,6 @@ import {
     macroGrams,
     Profile,
 } from "../../lib/profile";
-
-const MICRO_FIELDS: {
-    label: string;
-    unit: string;
-    get: (s: Serving) => number | undefined;
-}[] = [
-        { label: "Saturated fat", unit: "g", get: (s) => s.saturatedFat },
-        { label: "Polyunsaturated fat", unit: "g", get: (s) => s.polyunsaturatedFat },
-        { label: "Monounsaturated fat", unit: "g", get: (s) => s.monounsaturatedFat },
-        { label: "Trans fat", unit: "g", get: (s) => s.transFat },
-        { label: "Fiber", unit: "g", get: (s) => s.fiber },
-        { label: "Sugar", unit: "g", get: (s) => s.sugar },
-        { label: "Added sugars", unit: "g", get: (s) => s.addedSugars },
-        { label: "Cholesterol", unit: "mg", get: (s) => s.cholesterol },
-        { label: "Sodium", unit: "mg", get: (s) => s.sodium },
-        { label: "Potassium", unit: "mg", get: (s) => s.potassium },
-        { label: "Calcium", unit: "mg", get: (s) => s.calcium },
-        { label: "Iron", unit: "mg", get: (s) => s.iron },
-        { label: "Vitamin A", unit: "mcg", get: (s) => s.vitaminA },
-        { label: "Vitamin C", unit: "mg", get: (s) => s.vitaminC },
-        { label: "Vitamin D", unit: "mcg", get: (s) => s.vitaminD },
-    ];
 
 function gramOptionFor(food: Food): Serving | null {
     if (food.servings.length === 0) {

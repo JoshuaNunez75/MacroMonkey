@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Serving } from "./foodApi";
+import { MICRO_FIELDS } from "./nutrients";
 
 export type LoggedEntry = {
     id: string;
@@ -91,4 +92,28 @@ export async function updateEntry(
         entry.id === id ? { ...entry, ...changes } : entry
     );
     await AsyncStorage.setItem(KEY_PREFIX + date, JSON.stringify(updated));
+}
+
+export type MicroTotal = {
+    label: string;
+    unit: string;
+    value: number;
+    reportedBy: number;
+};
+
+export function microTotalsFor(entries: LoggedEntry[]): MicroTotal[] {
+    return MICRO_FIELDS.map((field) => {
+        let value = 0;
+        let reportedBy = 0;
+
+        entries.forEach((entry) => {
+            const perServing = field.get(entry.serving);
+            if (perServing !== undefined) {
+                value += perServing * entry.amount;
+                reportedBy += 1;
+            }
+        });
+
+        return { label: field.label, unit: field.unit, value, reportedBy };
+    }).filter((row) => row.reportedBy > 0);
 }

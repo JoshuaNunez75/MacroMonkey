@@ -8,6 +8,7 @@ import {
   deleteEntry,
   getEntries,
   LoggedEntry,
+  microTotalsFor,
   todayKey,
   totalsFor,
 } from "../lib/diary";
@@ -23,6 +24,7 @@ export default function Index() {
   const router = useRouter();
   const [entries, setEntries] = useState<LoggedEntry[]>([]);
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
+  const [showMicros, setShowMicros] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -53,6 +55,7 @@ export default function Index() {
   }
 
   const totals = totalsFor(entries);
+  const microTotals = microTotalsFor(entries);
   const targets = macroGrams(profile);
   const remaining = Math.max(0, profile.calorieGoal - totals.calories);
 
@@ -113,6 +116,46 @@ export default function Index() {
             </View>
           </View>
         </View>
+
+        {entries.length > 0 ? (
+          <>
+            <Pressable
+              style={styles.microsHeader}
+              onPress={() => setShowMicros(!showMicros)}
+            >
+              <Text style={styles.microsTitle}>Nutrition details</Text>
+              <Text style={styles.microsToggle}>
+                {showMicros ? "Hide" : "Show"}
+              </Text>
+            </Pressable>
+
+            {showMicros ? (
+              microTotals.length === 0 ? (
+                <Text style={styles.microsEmpty}>
+                  No detail data for today&apos;s foods
+                </Text>
+              ) : (
+                <View style={styles.microsBody}>
+                  {microTotals.map((row) => (
+                    <View key={row.label} style={styles.microRow}>
+                      <View style={styles.microLabelBlock}>
+                        <Text style={styles.microLabel}>{row.label}</Text>
+                        {row.reportedBy < entries.length ? (
+                          <Text style={styles.microPartial}>
+                            from {row.reportedBy} of {entries.length} items
+                          </Text>
+                        ) : null}
+                      </View>
+                      <Text style={styles.microValue}>
+                        {formatGrams(row.value)} {row.unit}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            ) : null}
+          </>
+        ) : null}
 
         <Text style={styles.sectionTitle}>Meals</Text>
 
@@ -248,6 +291,62 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.muted,
     marginTop: 1,
+  },
+  microsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 24,
+    paddingVertical: 6,
+  },
+  microsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  microsToggle: {
+    fontSize: 14,
+    color: colors.calories,
+    fontWeight: "600",
+  },
+  microsBody: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginTop: 8,
+  },
+  microRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  microLabelBlock: {
+    flex: 1,
+  },
+  microLabel: {
+    fontSize: 14,
+    color: colors.muted,
+  },
+  microPartial: {
+    fontSize: 11,
+    color: colors.carbs,
+    marginTop: 2,
+  },
+  microValue: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: "600",
+  },
+  microsEmpty: {
+    fontSize: 14,
+    color: colors.muted,
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 20,
