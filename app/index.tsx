@@ -12,20 +12,30 @@ import {
   totalsFor,
 } from "../lib/diary";
 import { formatGrams } from "../lib/format";
-import { goals } from "../lib/goals";
+import {
+  DEFAULT_PROFILE,
+  loadProfile,
+  macroGrams,
+  Profile,
+} from "../lib/profile";
 
 export default function Index() {
   const router = useRouter();
   const [entries, setEntries] = useState<LoggedEntry[]>([]);
+  const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
 
       async function load() {
-        const list = await getEntries(todayKey());
+        const [list, savedProfile] = await Promise.all([
+          getEntries(todayKey()),
+          loadProfile(),
+        ]);
         if (!cancelled) {
           setEntries(list);
+          setProfile(savedProfile);
         }
       }
 
@@ -43,7 +53,8 @@ export default function Index() {
   }
 
   const totals = totalsFor(entries);
-  const remaining = Math.max(0, goals.calories - totals.calories);
+  const targets = macroGrams(profile);
+  const remaining = Math.max(0, profile.calorieGoal - totals.calories);
 
   const dateLabel = new Date().toLocaleDateString(undefined, {
     weekday: "long",
@@ -59,13 +70,20 @@ export default function Index() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Today</Text>
-        <Text style={styles.date}>{dateLabel}</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>Today</Text>
+            <Text style={styles.date}>{dateLabel}</Text>
+          </View>
+          <Pressable onPress={() => router.push("/settings")} hitSlop={10}>
+            <Text style={styles.settingsLink}>Goals</Text>
+          </Pressable>
+        </View>
 
         <View style={styles.card}>
           <Text style={styles.calorieNumber}>{Math.round(totals.calories)}</Text>
           <Text style={styles.calorieGoal}>
-            of {goals.calories.toLocaleString()} cal
+            of {profile.calorieGoal.toLocaleString()} cal
           </Text>
           <Text style={styles.calorieRemaining}>
             {Math.round(remaining).toLocaleString()} remaining
@@ -77,21 +95,21 @@ export default function Index() {
                 {formatGrams(totals.protein)}g
               </Text>
               <Text style={styles.macroLabel}>Protein</Text>
-              <Text style={styles.macroGoal}>of {goals.protein}g</Text>
+              <Text style={styles.macroGoal}>of {Math.round(targets.protein)}g</Text>
             </View>
             <View style={styles.macro}>
               <Text style={[styles.macroValue, { color: colors.carbs }]}>
                 {formatGrams(totals.carbs)}g
               </Text>
               <Text style={styles.macroLabel}>Carbs</Text>
-              <Text style={styles.macroGoal}>of {goals.carbs}g</Text>
+              <Text style={styles.macroGoal}>of {Math.round(targets.carbs)}g</Text>
             </View>
             <View style={styles.macro}>
               <Text style={[styles.macroValue, { color: colors.fat }]}>
                 {formatGrams(totals.fat)}g
               </Text>
               <Text style={styles.macroLabel}>Fat</Text>
-              <Text style={styles.macroGoal}>of {goals.fat}g</Text>
+              <Text style={styles.macroGoal}>of {Math.round(targets.fat)}g</Text>
             </View>
           </View>
         </View>
@@ -152,6 +170,17 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingBottom: 48,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  settingsLink: {
+    fontSize: 15,
+    color: colors.calories,
+    fontWeight: "600",
+    marginTop: 20,
   },
   title: {
     fontSize: 34,

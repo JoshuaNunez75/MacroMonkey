@@ -15,7 +15,12 @@ import { colors } from "../../lib/colors";
 import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
 import { addEntry, todayKey } from "../../lib/diary";
-import { goals } from "../../lib/goals";
+import {
+    DEFAULT_PROFILE,
+    loadProfile,
+    macroGrams,
+    Profile,
+} from "../../lib/profile";
 
 const MICRO_FIELDS: {
     label: string;
@@ -126,15 +131,20 @@ export default function FoodDetail() {
     const [showMicros, setShowMicros] = useState(false);
     const [logState, setLogState] = useState<"idle" | "saving">("idle");
     const [logError, setLogError] = useState<string | null>(null);
+    const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
 
     useEffect(() => {
         let cancelled = false;
 
         async function load() {
             try {
-                const result = await getFood(id);
+                const [result, savedProfile] = await Promise.all([
+                    getFood(id),
+                    loadProfile(),
+                ]);
                 if (!cancelled) {
                     setFood(result);
+                    setProfile(savedProfile);
                 }
             } catch (e) {
                 if (!cancelled) {
@@ -165,7 +175,7 @@ export default function FoodDetail() {
         function selectServing(index: number) {
             setServingIndex(index);
             if (options[index].id === "per-metric-unit") {
-                setAmount(String(Math.round(food.servings[0].metricAmount ?? 100)));
+                setAmount(String(Math.round(options[0].metricAmount ?? 100)));
             } else {
                 setAmount("1");
             }
@@ -174,7 +184,7 @@ export default function FoodDetail() {
         const multiplier = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 
         async function logIt() {
-            if (multiplier <= 0) {
+            if (!food || multiplier <= 0) {
                 return;
             }
 
@@ -202,6 +212,8 @@ export default function FoodDetail() {
             unit: field.unit,
             value: field.get(serving),
         })).filter((row) => row.value !== undefined);
+
+        const targets = macroGrams(profile);
 
         const totals = {
             calories: serving.calories * multiplier,
@@ -258,26 +270,26 @@ export default function FoodDetail() {
                     <Text style={styles.calories}>{Math.round(totals.calories)}</Text>
                     <Text style={styles.caloriesLabel}>calories</Text>
                     <Text style={styles.percent}>
-                        {percentOf(totals.calories, goals.calories)}% of daily goal
+                        {percentOf(totals.calories, profile.calorieGoal)}% of daily goal
                     </Text>
 
                     <View style={styles.macroRow}>
                         <MacroStat
                             label="Protein"
                             value={totals.protein}
-                            goal={goals.protein}
+                            goal={targets.protein}
                             color={colors.protein}
                         />
                         <MacroStat
                             label="Carbs"
                             value={totals.carbs}
-                            goal={goals.carbs}
+                            goal={targets.carbs}
                             color={colors.carbs}
                         />
                         <MacroStat
                             label="Fat"
                             value={totals.fat}
-                            goal={goals.fat}
+                            goal={targets.fat}
                             color={colors.fat}
                         />
                     </View>
