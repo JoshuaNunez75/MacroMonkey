@@ -126,7 +126,13 @@ export default function Index() {
         ) : (
           <View style={styles.entryList}>
             {entries.map((entry) => (
-              <View key={entry.id} style={styles.entry}>
+              <Pressable
+                key={entry.id}
+                style={styles.entry}
+                onPress={() =>
+                  router.push(`/food/${entry.foodId}?entryId=${entry.id}`)
+                }
+              >
                 <View style={styles.entryMain}>
                   <Text style={styles.entryName} numberOfLines={1}>
                     {entry.name}
@@ -145,7 +151,7 @@ export default function Index() {
                 >
                   <Text style={styles.entryDeleteText}>✕</Text>
                 </Pressable>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}

@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../lib/colors";
 import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
-import { addEntry, todayKey } from "../../lib/diary";
+import { addEntry, getEntry, todayKey, updateEntry } from "../../lib/diary";
 import {
     DEFAULT_PROFILE,
     loadProfile,
@@ -122,11 +122,14 @@ function MacroStat({
 
 export default function FoodDetail() {
     const router = useRouter();
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const { id, entryId } = useLocalSearchParams<{
+        id: string;
+        entryId?: string;
+    }>();
 
     const [food, setFood] = useState<Food | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [servingIndex, setServingIndex] = useState(0);
+    const [servingId, setServingId] = useState<string | null>(null);
     const [amount, setAmount] = useState("1");
     const [showMicros, setShowMicros] = useState(false);
     const [logState, setLogState] = useState<"idle" | "saving">("idle");
@@ -142,9 +145,19 @@ export default function FoodDetail() {
                     getFood(id),
                     loadProfile(),
                 ]);
-                if (!cancelled) {
-                    setFood(result);
-                    setProfile(savedProfile);
+                if (cancelled) {
+                    return;
+                }
+
+                setFood(result);
+                setProfile(savedProfile);
+
+                if (entryId) {
+                    const existing = await getEntry(todayKey(), entryId);
+                    if (!cancelled && existing) {
+                        setServingId(existing.serving.id);
+                        setAmount(String(existing.amount));
+                    }
                 }
             } catch (e) {
                 if (!cancelled) {
@@ -158,7 +171,7 @@ export default function FoodDetail() {
         return () => {
             cancelled = true;
         };
-    }, [id]);
+    }, [id, entryId]);
 
     function renderBody() {
         if (error) {
@@ -170,11 +183,11 @@ export default function FoodDetail() {
 
         const gramOption = gramOptionFor(food);
         const options = gramOption ? [...food.servings, gramOption] : food.servings;
-        const serving = options[servingIndex] ?? options[0];
+        const serving = options.find((o) => o.id === servingId) ?? options[0];
 
-        function selectServing(index: number) {
-            setServingIndex(index);
-            if (options[index].id === "per-metric-unit") {
+        function selectServing(option: Serving) {
+            setServingId(option.id);
+            if (option.id === "per-metric-unit") {
                 setAmount(String(Math.round(options[0].metricAmount ?? 100)));
             } else {
                 setAmount("1");
@@ -192,14 +205,21 @@ export default function FoodDetail() {
             setLogError(null);
 
             try {
-                await addEntry({
-                    date: todayKey(),
-                    foodId: food.id,
-                    name: food.name,
-                    brand: food.brand,
-                    serving,
-                    amount: multiplier,
-                });
+                if (entryId) {
+                    await updateEntry(todayKey(), entryId, {
+                        serving,
+                        amount: multiplier,
+                    });
+                } else {
+                    await addEntry({
+                        date: todayKey(),
+                        foodId: food.id,
+                        name: food.name,
+                        brand: food.brand,
+                        serving,
+                        amount: multiplier,
+                    });
+                }
                 router.dismissAll();
             } catch (e) {
                 setLogState("idle");
@@ -232,12 +252,12 @@ export default function FoodDetail() {
 
                 <Text style={styles.label}>Serving</Text>
                 <View style={styles.chipRow}>
-                    {options.map((option, index) => {
-                        const selected = index === servingIndex;
+                    {options.map((option) => {
+                        const selected = option.id === serving.id;
                         return (
                             <Pressable
                                 key={option.id}
-                                onPress={() => selectServing(index)}
+                                onPress={() => selectServing(option)}
                                 style={[styles.chip, selected && styles.chipSelected]}
                             >
                                 <Text
@@ -329,7 +349,7 @@ export default function FoodDetail() {
                     disabled={multiplier <= 0 || logState !== "idle"}
                 >
                     <Text style={styles.logButtonText}>
-                        {logState === "saving" ? "Saving…" : "Log this food"}
+                        {logState === "saving" ? "Saving…" : entryId ? "Save changes" : "Log this food"}
                     </Text>
                 </Pressable>
 

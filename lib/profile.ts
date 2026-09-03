@@ -92,6 +92,7 @@ const LB_TO_KG = 0.45359237;
 const IN_TO_CM = 2.54;
 const CALORIES_PER_LB = 3500;
 const MINIMUM_CALORIES = 1200;
+const GOAL_ROUNDING = 10;
 
 export function bmrFor(profile: Profile): number {
     const kg = profile.weightLb * LB_TO_KG;
@@ -107,8 +108,7 @@ export function maintenanceFor(profile: Profile): number {
 
 export function suggestedCalories(profile: Profile): number {
     const dailyAdjustment = (profile.weeklyChangeLb * CALORIES_PER_LB) / 7;
-    return Math.max(
-        MINIMUM_CALORIES,
-        Math.round(maintenanceFor(profile) - dailyAdjustment)
-    );
+  const raw = maintenanceFor(profile) - dailyAdjustment;
+  const rounded = Math.round(raw / GOAL_ROUNDING) * GOAL_ROUNDING;
+  return Math.max(MINIMUM_CALORIES, rounded);
 }
