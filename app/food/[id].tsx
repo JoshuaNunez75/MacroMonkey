@@ -124,7 +124,7 @@ export default function FoodDetail() {
     const [servingIndex, setServingIndex] = useState(0);
     const [amount, setAmount] = useState("1");
     const [showMicros, setShowMicros] = useState(false);
-    const [logState, setLogState] = useState<"idle" | "saving" | "done">("idle");
+    const [logState, setLogState] = useState<"idle" | "saving">("idle");
     const [logError, setLogError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -190,7 +190,7 @@ export default function FoodDetail() {
                     serving,
                     amount: multiplier,
                 });
-                setLogState("done");
+                router.dismissAll();
             } catch (e) {
                 setLogState("idle");
                 setLogError(e instanceof Error ? e.message : "Could not save");
@@ -317,11 +317,7 @@ export default function FoodDetail() {
                     disabled={multiplier <= 0 || logState !== "idle"}
                 >
                     <Text style={styles.logButtonText}>
-                        {logState === "saving"
-                            ? "Saving…"
-                            : logState === "done"
-                                ? "Logged ✓"
-                                : "Log this food"}
+                        {logState === "saving" ? "Saving…" : "Log this food"}
                     </Text>
                 </Pressable>
 
