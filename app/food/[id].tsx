@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../lib/colors";
 import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
+import { addEntry, todayKey } from "../../lib/diary";
 import { goals } from "../../lib/goals";
 
 const MICRO_FIELDS: {
@@ -123,6 +124,8 @@ export default function FoodDetail() {
     const [servingIndex, setServingIndex] = useState(0);
     const [amount, setAmount] = useState("1");
     const [showMicros, setShowMicros] = useState(false);
+    const [logState, setLogState] = useState<"idle" | "saving" | "done">("idle");
+    const [logError, setLogError] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -169,6 +172,30 @@ export default function FoodDetail() {
         }
         const parsed = Number(amount);
         const multiplier = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+
+        async function logIt() {
+            if (multiplier <= 0) {
+                return;
+            }
+
+            setLogState("saving");
+            setLogError(null);
+
+            try {
+                await addEntry({
+                    date: todayKey(),
+                    foodId: food.id,
+                    name: food.name,
+                    brand: food.brand,
+                    serving,
+                    amount: multiplier,
+                });
+                setLogState("done");
+            } catch (e) {
+                setLogState("idle");
+                setLogError(e instanceof Error ? e.message : "Could not save");
+            }
+        }
 
         const visibleMicros = MICRO_FIELDS.map((field) => ({
             label: field.label,
@@ -281,6 +308,24 @@ export default function FoodDetail() {
                         </View>
                     )
                 ) : null}
+                <Pressable
+                    style={[
+                        styles.logButton,
+                        (multiplier <= 0 || logState !== "idle") && styles.logButtonDisabled,
+                    ]}
+                    onPress={logIt}
+                    disabled={multiplier <= 0 || logState !== "idle"}
+                >
+                    <Text style={styles.logButtonText}>
+                        {logState === "saving"
+                            ? "Saving…"
+                            : logState === "done"
+                                ? "Logged ✓"
+                                : "Log this food"}
+                    </Text>
+                </Pressable>
+
+                {logError ? <Text style={styles.error}>{logError}</Text> : null}
             </ScrollView >
         );
     }
@@ -437,6 +482,21 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: colors.muted,
         marginTop: 1,
+    },
+    logButton: {
+        backgroundColor: colors.calories,
+        borderRadius: 14,
+        paddingVertical: 16,
+        alignItems: "center",
+        marginTop: 32,
+    },
+    logButtonDisabled: {
+        opacity: 0.5,
+    },
+    logButtonText: {
+        color: colors.bg,
+        fontSize: 16,
+        fontWeight: "700",
     },
     microsHeader: {
         flexDirection: "row",
