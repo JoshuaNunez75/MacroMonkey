@@ -294,13 +294,22 @@ export default function Index() {
           <Text style={styles.cardHint}>Tap for full breakdown</Text>
         </Pressable>
 
-        <Pressable
-          style={styles.searchBar}
-          onPress={() => router.push(`/search?date=${dateKey}`)}
-        >
-          <Ionicons name="search" size={18} color={colors.calories} />
-          <Text style={styles.searchBarText}>Search for a food to log</Text>
-        </Pressable>
+        <View style={styles.searchRow}>
+          <Pressable
+            style={styles.searchBar}
+            onPress={() => router.push(`/search?date=${dateKey}`)}
+          >
+            <Ionicons name="search" size={18} color={colors.calories} />
+            <Text style={styles.searchBarText}>Search for a food to log</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.scanButton}
+            onPress={() => router.push(`/scan?date=${dateKey}`)}
+          >
+            <Ionicons name="barcode-outline" size={22} color={colors.calories} />
+          </Pressable>
+        </View>
 
         <View style={styles.mealsHeader}>
           <Text style={styles.sectionTitle}>Meals</Text>
@@ -403,7 +412,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   appName: {
-    fontSize: 17,
+    fontSize: 30,
     fontWeight: "700",
     color: colors.text,
     letterSpacing: 0.3,
@@ -699,7 +708,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.muted,
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 16,
+  },
+  scanButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.accentSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   searchBar: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
@@ -709,7 +735,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    marginTop: 16,
   },
   searchBarText: {
     fontSize: 15,
