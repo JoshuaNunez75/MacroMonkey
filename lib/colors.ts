@@ -8,4 +8,7 @@ export const colors = {
   protein: "#F87171",
   carbs: "#FBBF24",
   fat: "#60A5FA",
+  pill: "#20242C",
+  overBg: "rgba(248, 113, 113, 0.16)",
+  overText: "#FCA5A5",
 };

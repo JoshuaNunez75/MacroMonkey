@@ -33,6 +33,7 @@ function MacroRing({
   color: string;
 }) {
   const progress = goal > 0 ? value / goal : 0;
+  const over = progress > 1;
 
   return (
     <View style={styles.macro}>
@@ -40,17 +41,21 @@ function MacroRing({
         size={66}
         strokeWidth={7}
         progress={progress}
-        color={progress > 1 ? colors.text : color}
+        color={color}
         trackColor={colors.border}
       >
         <Text style={[styles.macroPercent, { color }]}>
           {Math.round(progress * 100)}%
         </Text>
       </Ring>
+
       <Text style={styles.macroLabel}>{label}</Text>
-      <Text style={styles.macroValue}>
-        {formatGrams(value)} / {Math.round(goal)}g
-      </Text>
+
+      <View style={[styles.macroPill, over && styles.pillOver]}>
+        <Text style={[styles.macroPillText, over && styles.pillOverText]}>
+          {formatGrams(value)}/{Math.round(goal)}g
+        </Text>
+      </View>
     </View>
   );
 }
@@ -95,8 +100,7 @@ export default function Index() {
   const remaining = Math.max(0, profile.calorieGoal - totals.calories);
   const calorieProgress =
     profile.calorieGoal > 0 ? totals.calories / profile.calorieGoal : 0;
-  const calorieColor =
-    calorieProgress > 1 ? colors.protein : colors.calories;
+  const calorieOver = calorieProgress > 1;
 
   const dateLabel = new Date().toLocaleDateString(undefined, {
     weekday: "long",
@@ -127,21 +131,31 @@ export default function Index() {
             size={188}
             strokeWidth={15}
             progress={calorieProgress}
-            color={calorieColor}
+            color={colors.calories}
             trackColor={colors.border}
           >
-            <Text style={[styles.calorieNumber, { color: calorieColor }]}>
+            <Text style={styles.calorieNumber}>
               {Math.round(totals.calories).toLocaleString()}
             </Text>
-            <Text style={styles.calorieGoal}>
-              of {profile.calorieGoal.toLocaleString()}
-            </Text>
+            <Text style={styles.calorieUnit}>CALORIES</Text>
           </Ring>
 
-          <Text style={styles.calorieRemaining}>
-            {calorieProgress > 1 ? `${Math.round(totals.calories - profile.calorieGoal).toLocaleString()} over goal`
-              : `${Math.round(remaining).toLocaleString()} remaining`}
-          </Text>
+          <View style={[styles.caloriePill, calorieOver && styles.pillOver]}>
+            <Text
+              style={[
+                styles.caloriePillText,
+                calorieOver && styles.pillOverText,
+              ]}
+            >
+              {calorieOver
+                ? `${Math.round(
+                  totals.calories - profile.calorieGoal
+                ).toLocaleString()} over ${profile.calorieGoal.toLocaleString()}`
+                : `${Math.round(
+                  remaining
+                ).toLocaleString()} left of ${profile.calorieGoal.toLocaleString()}`}
+            </Text>
+          </View>
 
           <View style={styles.macroRow}>
             <MacroRing
@@ -300,22 +314,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   calorieNumber: {
-    fontSize: 40,
+    fontSize: 38,
     fontWeight: "700",
+    color: colors.text,
   },
-  calorieGoal: {
-    fontSize: 13,
+  calorieUnit: {
+    fontSize: 10,
+    fontWeight: "700",
     color: colors.muted,
-    marginTop: 2,
+    letterSpacing: 1.4,
+    marginTop: 3,
   },
-  calorieRemaining: {
-    fontSize: 13,
-    color: colors.muted,
+  caloriePill: {
+    backgroundColor: colors.pill,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     marginTop: 18,
+  },
+  caloriePillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  pillOver: {
+    backgroundColor: colors.overBg,
+  },
+  pillOverText: {
+    color: colors.overText,
   },
   macroPercent: {
     fontSize: 13,
     fontWeight: "700",
+  },
+  macroPill: {
+    backgroundColor: colors.pill,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginTop: 6,
+  },
+  macroPillText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.text,
   },
   macroRow: {
     flexDirection: "row",
@@ -329,15 +371,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
   },
-  macroValue: {
-    fontSize: 12,
-    color: colors.muted,
-    marginTop: 1,
-  },
   macroLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
-    color: colors.text,
+    color: colors.muted,
     marginTop: 8,
   },
   microsHeader: {
