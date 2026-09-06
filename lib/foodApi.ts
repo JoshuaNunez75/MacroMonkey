@@ -2,6 +2,7 @@ const TOKEN_URL = "https://oauth.fatsecret.com/connect/token";
 const SEARCH_URL = "https://platform.fatsecret.com/rest/foods/search/v5";
 const AUTOCOMPLETE_URL = "https://platform.fatsecret.com/rest/food/autocomplete/v2";
 const FOOD_URL = "https://platform.fatsecret.com/rest/food/v5";
+const BARCODE_URL = "https://platform.fatsecret.com/rest/food/barcode/find-by-id/v2";
 
 export type Serving = {
   id: string;
@@ -60,7 +61,7 @@ async function getAccessToken(): Promise<string> {
       Authorization: "Basic " + btoa(`${id}:${secret}`),
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: "grant_type=client_credentials&scope=premier",
+    body: "grant_type=client_credentials&scope=premier%20barcode",
   });
 
   if (!response.ok) {
@@ -207,4 +208,23 @@ export async function getFood(id: string): Promise<Food> {
   }
 
   return toFood(raw);
+}
+
+export async function findFoodByBarcode(barcode: string): Promise<Food | null> {
+  const gtin13 = barcode.trim().padStart(13, "0");
+
+  const data = await apiGet(
+    BARCODE_URL + "?barcode=" + encodeURIComponent(gtin13) + "&format=json"
+  );
+
+  if (data?.food) {
+    return toFood(data.food);
+  }
+
+  const rawId = data?.food_id?.value ?? data?.food_id;
+  if (!rawId || String(rawId) === "0") {
+    return null;
+  }
+
+  return getFood(String(rawId));
 }

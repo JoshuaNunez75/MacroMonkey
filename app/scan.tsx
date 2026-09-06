@@ -1,35 +1,51 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../lib/colors";
+import { findFoodByBarcode } from "../lib/foodApi";
+
+type ScanStatus = "idle" | "looking" | "notfound" | "error";
 
 export default function Scan() {
     const router = useRouter();
+    const { date } = useLocalSearchParams<{ date?: string }>();
     const [permission, requestPermission] = useCameraPermissions();
+      const [status, setStatus] = useState<ScanStatus>("idle");
+    const [message, setMessage] = useState<string | null>(null);
     const [scanned, setScanned] = useState<string | null>(null);
     const lockedRef = useRef(false);
 
     function scanAgain() {
         lockedRef.current = false;
         setScanned(null);
+        setStatus("idle");
+        setMessage(null);
     }
 
-    function onBarcodeScanned(result: { data: string; type: string }) {
+    async function onBarcodeScanned(result: { data: string; type: string }) {
         if (lockedRef.current) {
             return;
         }
         lockedRef.current = true;
         setScanned(result.data);
-        console.log(
-            "BARCODE:",
-            result.type,
-            result.data,
-            "length",
-            result.data.length
-        );
+        setStatus("looking");
+
+        try {
+            const food = await findFoodByBarcode(result.data);
+
+            if (!food) {
+                setStatus("notfound");
+                return;
+            }
+
+            router.replace(`/food/${food.id}${date ? `?date=${date}` : ""}`);
+        } catch (e) {
+            setStatus("error");
+            setMessage(e instanceof Error ? e.message : "Lookup failed");
+        }
     }
 
     function renderBody() {
@@ -81,11 +97,31 @@ export default function Scan() {
 
             {scanned ? (
                 <View style={styles.result}>
-                    <Text style={styles.resultLabel}>Scanned</Text>
+                    <Text style={styles.resultLabel}>SCANNED</Text>
                     <Text style={styles.resultCode}>{scanned}</Text>
-                    <Pressable style={styles.button} onPress={scanAgain}>
-                        <Text style={styles.buttonText}>Scan again</Text>
-                    </Pressable>
+
+                    {status === "looking" ? (
+                        <ActivityIndicator
+                            color={colors.calories}
+                            style={styles.resultSpinner}
+                        />
+                    ) : null}
+
+                    {status === "notfound" ? (
+                        <Text style={styles.resultMessage}>
+                            No match for this barcode. Try searching by name instead.
+                        </Text>
+                    ) : null}
+
+                    {status === "error" ? (
+                        <Text style={styles.resultError}>{message}</Text>
+                    ) : null}
+
+                    {status === "looking" ? null : (
+                        <Pressable style={styles.button} onPress={scanAgain}>
+                            <Text style={styles.buttonText}>Scan again</Text>
+                        </Pressable>
+                    )}
                 </View>
             ) : null}
         </SafeAreaView>
@@ -180,5 +216,21 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: colors.text,
         marginTop: 6,
+    },
+    resultSpinner: {
+        marginTop: 16,
+    },
+    resultMessage: {
+        fontSize: 14,
+        color: colors.muted,
+        textAlign: "center",
+        lineHeight: 20,
+        marginTop: 12,
+    },
+    resultError: {
+        fontSize: 14,
+        color: colors.protein,
+        textAlign: "center",
+        marginTop: 12,
     },
 });
