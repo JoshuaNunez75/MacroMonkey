@@ -9,7 +9,6 @@ import {
   deleteEntry,
   getEntries,
   LoggedEntry,
-  microTotalsFor,
   todayKey,
   totalsFor,
 } from "../lib/diary";
@@ -64,7 +63,6 @@ export default function Index() {
   const router = useRouter();
   const [entries, setEntries] = useState<LoggedEntry[]>([]);
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
-  const [showMicros, setShowMicros] = useState(false);
   const [showPercent, setShowPercent] = useState(false);
 
   useFocusEffect(
@@ -115,11 +113,9 @@ export default function Index() {
   }
 
   const totals = totalsFor(entries);
-  const microTotals = microTotalsFor(entries);
   const targets = macroGrams(profile);
   const remaining = Math.max(0, profile.calorieGoal - totals.calories);
-  const calorieProgress =
-    profile.calorieGoal > 0 ? totals.calories / profile.calorieGoal : 0;
+  const calorieProgress = profile.calorieGoal > 0 ? totals.calories / profile.calorieGoal : 0;
   const calorieOver = calorieProgress > 1;
 
   const dateLabel = new Date().toLocaleDateString(undefined, {
@@ -146,7 +142,7 @@ export default function Index() {
           </Pressable>
         </View>
 
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={() => router.push("/day")}>
           <Ring
             size={188}
             strokeWidth={15}
@@ -197,47 +193,8 @@ export default function Index() {
               color={colors.fat}
             />
           </View>
-        </View>
-
-        {entries.length > 0 ? (
-          <>
-            <Pressable
-              style={styles.microsHeader}
-              onPress={() => setShowMicros(!showMicros)}
-            >
-              <Text style={styles.microsTitle}>Nutrition details</Text>
-              <Text style={styles.microsToggle}>
-                {showMicros ? "Hide" : "Show"}
-              </Text>
-            </Pressable>
-
-            {showMicros ? (
-              microTotals.length === 0 ? (
-                <Text style={styles.microsEmpty}>
-                  No detail data for today&apos;s foods
-                </Text>
-              ) : (
-                <View style={styles.microsBody}>
-                  {microTotals.map((row) => (
-                    <View key={row.label} style={styles.microRow}>
-                      <View style={styles.microLabelBlock}>
-                        <Text style={styles.microLabel}>{row.label}</Text>
-                        {row.reportedBy < entries.length ? (
-                          <Text style={styles.microPartial}>
-                            from {row.reportedBy} of {entries.length} items
-                          </Text>
-                        ) : null}
-                      </View>
-                      <Text style={styles.microValue}>
-                        {formatGrams(row.value)} {row.unit}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )
-            ) : null}
-          </>
-        ) : null}
+          <Text style={styles.cardHint}>Tap for full breakdown</Text>
+        </Pressable>
 
         <View style={styles.mealsHeader}>
           <Text style={styles.sectionTitle}>Meals</Text>
@@ -394,6 +351,11 @@ const styles = StyleSheet.create({
   },
   pillOverText: {
     color: colors.overText,
+  },
+  cardHint: {
+    fontSize: 12,
+    color: colors.muted,
+    marginTop: 18,
   },
   macroPercent: {
     fontSize: 13,
