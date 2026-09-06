@@ -26,7 +26,7 @@ export function todayKey(): string {
     return dateKeyFor(new Date());
 }
 
-function dateFromKey(key: string): Date {
+export function dateFromKey(key: string): Date {
     const [year, month, day] = key.split("-").map(Number);
     return new Date(year, month - 1, day);
 }

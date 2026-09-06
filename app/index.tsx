@@ -3,9 +3,16 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { Platform } from "react-native";
 import { Ring } from "../components/Ring";
 import { colors } from "../lib/colors";
 import {
+  dateFromKey,
+  dateKeyFor,
   dateLabelFor,
   deleteEntry,
   fullDateFor,
@@ -68,6 +75,7 @@ export default function Index() {
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [showPercent, setShowPercent] = useState(false);
   const [dateKey, setDateKey] = useState(todayKey());
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -124,6 +132,15 @@ export default function Index() {
 
   const isToday = dateKey === todayKey();
 
+  function onDateChange(event: DateTimePickerEvent, selected?: Date) {
+    if (Platform.OS !== "ios") {
+      setPickerOpen(false);
+    }
+    if (selected) {
+      setDateKey(dateKeyFor(selected));
+    }
+  }
+
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="light" />
@@ -133,12 +150,32 @@ export default function Index() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>{dateLabelFor(dateKey)}</Text>
-            <Text style={styles.date}>{fullDateFor(dateKey)}</Text>
-          </View>
-          <Pressable onPress={() => router.push("/settings")} hitSlop={10}>
-            <Text style={styles.settingsLink}>Goals</Text>
+          <Pressable
+            style={styles.headerLeft}
+            onPress={() => setPickerOpen(!pickerOpen)}
+            hitSlop={8}
+          >
+            <View style={styles.titleRow}>
+              <Text style={styles.title} numberOfLines={1}>
+                {dateLabelFor(dateKey)}
+              </Text>
+              <Ionicons
+                name={pickerOpen ? "chevron-up" : "chevron-down"}
+                size={18}
+                color={colors.muted}
+              />
+            </View>
+            <Text style={styles.date} numberOfLines={1}>
+              {fullDateFor(dateKey)}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.iconButton}
+            onPress={() => router.push("/settings")}
+            hitSlop={8}
+          >
+            <Ionicons name="settings-outline" size={20} color={colors.text} />
           </Pressable>
         </View>
 
@@ -168,6 +205,36 @@ export default function Index() {
             </Text>
           </Pressable>
         </View>
+
+        {pickerOpen ? (
+          Platform.OS === "ios" ? (
+            <View style={styles.pickerCard}>
+              <DateTimePicker
+                value={dateFromKey(dateKey)}
+                mode="date"
+                display="inline"
+                maximumDate={new Date()}
+                onChange={onDateChange}
+                themeVariant="dark"
+                accentColor={colors.calories}
+              />
+              <Pressable
+                style={styles.pickerDone}
+                onPress={() => setPickerOpen(false)}
+              >
+                <Text style={styles.pickerDoneText}>Done</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <DateTimePicker
+              value={dateFromKey(dateKey)}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              onChange={onDateChange}
+            />
+          )
+        ) : null}
 
         <Pressable style={styles.card} onPress={() => router.push(`/day?date=${dateKey}`)}>
           <Ring
@@ -336,13 +403,42 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    justifyContent: "space-between",
   },
-  settingsLink: {
+  headerLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    backgroundColor: colors.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 14,
+  },
+  pickerCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 8,
+    marginTop: 14,
+  },
+  pickerDone: {
+    alignSelf: "flex-end",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  pickerDoneText: {
     fontSize: 15,
-    color: colors.calories,
     fontWeight: "600",
-    marginTop: 20,
+    color: colors.calories,
   },
   title: {
     fontSize: 34,
