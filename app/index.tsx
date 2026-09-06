@@ -26,6 +26,7 @@ import {
   totalsFor,
 } from "../lib/diary";
 import { formatGrams } from "../lib/format";
+import { useCountUp } from "../lib/useCountUp";
 import {
   DEFAULT_PROFILE,
   loadProfile,
@@ -46,6 +47,7 @@ function MacroRing({
 }) {
   const progress = goal > 0 ? value / goal : 0;
   const over = progress > 1;
+  const shown = useCountUp(value);
 
   return (
     <View style={styles.macro}>
@@ -65,7 +67,7 @@ function MacroRing({
 
       <View style={[styles.macroPill, over && styles.pillOver]}>
         <Text style={[styles.macroPillText, over && styles.pillOverText]}>
-          {formatGrams(value)}/{Math.round(goal)}g
+          {formatGrams(shown)}/{Math.round(goal)}g
         </Text>
       </View>
     </View>
@@ -135,6 +137,7 @@ export default function Index() {
   const remaining = Math.max(0, profile.calorieGoal - totals.calories);
   const calorieProgress = profile.calorieGoal > 0 ? totals.calories / profile.calorieGoal : 0;
   const calorieOver = calorieProgress > 1;
+  const shownCalories = useCountUp(totals.calories);
 
   const isToday = dateKey === todayKey();
 
@@ -303,7 +306,7 @@ export default function Index() {
             trackColor={colors.border}
           >
             <Text style={styles.calorieNumber}>
-              {Math.round(totals.calories).toLocaleString()}
+              {Math.round(shownCalories).toLocaleString()}
             </Text>
             <Text style={styles.calorieUnit}>CALORIES</Text>
           </Ring>
@@ -316,11 +319,13 @@ export default function Index() {
               ]}
             >
               {calorieOver
-                ? `${Math.round(
-                  totals.calories - profile.calorieGoal
+                ? `${Math.max(
+                  0,
+                  Math.round(shownCalories - profile.calorieGoal)
                 ).toLocaleString()} over ${profile.calorieGoal.toLocaleString()}`
-                : `${Math.round(
-                  remaining
+                : `${Math.max(
+                  0,
+                  Math.round(profile.calorieGoal - shownCalories)
                 ).toLocaleString()} left of ${profile.calorieGoal.toLocaleString()}`}
             </Text>
           </View>
