@@ -14,11 +14,10 @@ import {
   dateFromKey,
   dateKeyFor,
   dateLabelFor,
-  dayOfMonthFor,
   deleteEntry,
+  fullDateFor,
   getEntries,
-  weekDaysFor,
-  weekdayLetterFor,
+  isRelativeDate,
   LoggedEntry,
   shiftDateKey,
   todayKey,
@@ -162,76 +161,46 @@ export default function Index() {
           </Pressable>
         </View>
 
-        <View style={styles.weekRow}>
+        <View style={styles.dateNav}>
           <Pressable
             style={styles.navButton}
-            onPress={() => setDateKey(shiftDateKey(dateKey, -7))}
+            onPress={() => setDateKey(shiftDateKey(dateKey, -1))}
             hitSlop={8}
           >
             <Ionicons name="chevron-back" size={18} color={colors.text} />
           </Pressable>
 
-          <View style={styles.weekDays}>
-            {weekDaysFor(dateKey).map((key) => {
-              const selected = key === dateKey;
-              const marksToday = key === todayKey();
+          <Pressable
+            style={styles.navCenter}
+            onPress={() => setPickerOpen(!pickerOpen)}
+            hitSlop={8}
+          >
+            <View style={styles.titleRow}>
+              <Text style={styles.title} numberOfLines={1}>
+                {dateLabelFor(dateKey)}
+              </Text>
+              <Ionicons
+                name={pickerOpen ? "chevron-up" : "chevron-down"}
+                size={18}
+                color={colors.muted}
+              />
+            </View>
 
-              return (
-                <Pressable
-                  key={key}
-                  style={styles.day}
-                  onPress={() => setDateKey(key)}
-                  hitSlop={4}
-                >
-                  <Text
-                    style={[styles.dayLetter, selected && styles.dayLetterOn]}
-                  >
-                    {weekdayLetterFor(key)}
-                  </Text>
-                  <View
-                    style={[
-                      styles.dayNumber,
-                      marksToday && !selected && styles.dayNumberToday,
-                      selected && styles.dayNumberOn,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dayNumberText,
-                        selected && styles.dayNumberTextOn,
-                      ]}
-                    >
-                      {dayOfMonthFor(key)}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
+            {isRelativeDate(dateKey) ? (
+              <Text style={styles.date} numberOfLines={1}>
+                {fullDateFor(dateKey)}
+              </Text>
+            ) : null}
+          </Pressable>
 
           <Pressable
             style={styles.navButton}
-            onPress={() => setDateKey(shiftDateKey(dateKey, 7))}
+            onPress={() => setDateKey(shiftDateKey(dateKey, 1))}
             hitSlop={8}
           >
             <Ionicons name="chevron-forward" size={18} color={colors.text} />
           </Pressable>
         </View>
-
-        <Pressable
-          style={styles.dateLabelRow}
-          onPress={() => setPickerOpen(!pickerOpen)}
-          hitSlop={8}
-        >
-          <Text style={styles.title} numberOfLines={1}>
-            {dateLabelFor(dateKey)}
-          </Text>
-          <Ionicons
-            name={pickerOpen ? "chevron-up" : "chevron-down"}
-            size={18}
-            color={colors.muted}
-          />
-        </Pressable>
 
         {isToday ? null : (
           <Pressable
@@ -434,7 +403,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   appName: {
-    fontSize: 30,
+    fontSize: 17,
     fontWeight: "700",
     color: colors.text,
     letterSpacing: 0.3,
@@ -484,57 +453,10 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: 2,
   },
-  weekRow: {
+  dateNav: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 18,
-  },
-  weekDays: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-around",
-  },
-  day: {
-    alignItems: "center",
-  },
-  dayLetter: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: colors.muted,
-    marginBottom: 6,
-  },
-  dayLetterOn: {
-    color: colors.calories,
-  },
-  dayNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dayNumberToday: {
-    borderWidth: 1,
-    borderColor: colors.accentSoft,
-  },
-  dayNumberOn: {
-    backgroundColor: colors.calories,
-  },
-  dayNumberText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  dayNumberTextOn: {
-    color: colors.bg,
-    fontWeight: "700",
-  },
-  dateLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    marginTop: 16,
   },
   navButton: {
     width: 34,
