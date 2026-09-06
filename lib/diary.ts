@@ -45,6 +45,27 @@ export function fullDateFor(key: string): string {
     });
 }
 
+export function isRelativeDate(key: string): boolean {
+    const today = todayKey();
+    return key === today || key === shiftDateKey(today, -1);
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+];
+
 export function dateLabelFor(key: string): string {
     const today = todayKey();
     if (key === today) {
@@ -53,7 +74,9 @@ export function dateLabelFor(key: string): string {
     if (key === shiftDateKey(today, -1)) {
         return "Yesterday";
     }
-    return fullDateFor(key);
+
+    const date = dateFromKey(key);
+    return `${WEEKDAYS[date.getDay()]}. ${MONTHS[date.getMonth()]}. ${date.getDate()}`;
 }
 
 export async function getEntries(date: string): Promise<LoggedEntry[]> {

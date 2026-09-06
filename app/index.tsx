@@ -17,6 +17,7 @@ import {
   deleteEntry,
   fullDateFor,
   getEntries,
+  isRelativeDate,
   LoggedEntry,
   shiftDateKey,
   todayKey,
@@ -165,9 +166,12 @@ export default function Index() {
                 color={colors.muted}
               />
             </View>
-            <Text style={styles.date} numberOfLines={1}>
-              {fullDateFor(dateKey)}
-            </Text>
+
+            {isRelativeDate(dateKey) ? (
+              <Text style={styles.date} numberOfLines={1}>
+                {fullDateFor(dateKey)}
+              </Text>
+            ) : null}
           </Pressable>
 
           <Pressable
@@ -402,7 +406,7 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   headerLeft: {
     flex: 1,
@@ -420,7 +424,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pill,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 14,
   },
   pickerCard: {
     backgroundColor: colors.card,
