@@ -190,3 +190,14 @@ export function weekdayLetterFor(key: string): string {
 export function dayOfMonthFor(key: string): number {
     return dateFromKey(key).getDate();
 }
+
+export async function daysWithEntries(keys: string[]): Promise<string[]> {
+    const results = await Promise.all(
+        keys.map(async (key) => ({
+            key,
+            hasEntries: (await getEntries(key)).length > 0,
+        }))
+    );
+
+    return results.filter((row) => row.hasEntries).map((row) => row.key);
+}

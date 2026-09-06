@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { Platform } from "react-native";
+import { PanResponder, Platform } from "react-native";
 import { Ring } from "../components/Ring";
 import { colors } from "../lib/colors";
 import {
@@ -15,6 +15,7 @@ import {
   dateKeyFor,
   dateLabelFor,
   dayOfMonthFor,
+  daysWithEntries,
   deleteEntry,
   getEntries,
   weekDaysFor,
@@ -78,19 +79,22 @@ export default function Index() {
   const [showPercent, setShowPercent] = useState(false);
   const [dateKey, setDateKey] = useState(todayKey());
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [loggedDays, setLoggedDays] = useState<string[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
 
       async function load() {
-        const [list, savedProfile] = await Promise.all([
+        const [list, savedProfile, logged] = await Promise.all([
           getEntries(dateKey),
           loadProfile(),
+          daysWithEntries(weekDaysFor(dateKey)),
         ]);
         if (!cancelled) {
           setEntries(list);
           setProfile(savedProfile);
+          setLoggedDays(logged);
         }
       }
 
@@ -134,6 +138,18 @@ export default function Index() {
 
   const isToday = dateKey === todayKey();
 
+  const weekSwipe = PanResponder.create({
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      Math.abs(gesture.dx) > 20 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onPanResponderRelease: (_event, gesture) => {
+      if (gesture.dx <= -40) {
+        setDateKey(shiftDateKey(dateKey, 7));
+      } else if (gesture.dx >= 40) {
+        setDateKey(shiftDateKey(dateKey, -7));
+      }
+    },
+  });
+
   function onDateChange(event: DateTimePickerEvent, selected?: Date) {
     if (Platform.OS !== "ios") {
       setPickerOpen(false);
@@ -165,13 +181,13 @@ export default function Index() {
         <View style={styles.weekRow}>
           <Pressable
             style={styles.navButton}
-            onPress={() => setDateKey(shiftDateKey(dateKey, -7))}
+            onPress={() => setDateKey(shiftDateKey(dateKey, -1))}
             hitSlop={8}
           >
             <Ionicons name="chevron-back" size={18} color={colors.text} />
           </Pressable>
 
-          <View style={styles.weekDays}>
+          <View style={styles.weekDays} {...weekSwipe.panHandlers}>
             {weekDaysFor(dateKey).map((key) => {
               const selected = key === dateKey;
               const marksToday = key === todayKey();
@@ -204,6 +220,13 @@ export default function Index() {
                       {dayOfMonthFor(key)}
                     </Text>
                   </View>
+
+                  <View
+                    style={[
+                      styles.dayDot,
+                      loggedDays.includes(key) && styles.dayDotOn,
+                    ]}
+                  />
                 </Pressable>
               );
             })}
@@ -211,7 +234,7 @@ export default function Index() {
 
           <Pressable
             style={styles.navButton}
-            onPress={() => setDateKey(shiftDateKey(dateKey, 7))}
+            onPress={() => setDateKey(shiftDateKey(dateKey, 1))}
             hitSlop={8}
           >
             <Ionicons name="chevron-forward" size={18} color={colors.text} />
@@ -537,6 +560,16 @@ const styles = StyleSheet.create({
   dayNumberTextOn: {
     color: colors.bg,
     fontWeight: "700",
+  },
+  dayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 999,
+    marginTop: 5,
+    backgroundColor: "transparent",
+  },
+  dayDotOn: {
+    backgroundColor: colors.muted,
   },
   dateLabelRow: {
     flexDirection: "row",
