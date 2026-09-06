@@ -150,9 +150,28 @@ export default function Index() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerRow}>
+        <View style={styles.appBar}>
+          <Text style={styles.appName}>MacroMonkey</Text>
           <Pressable
-            style={styles.headerLeft}
+            style={styles.iconButton}
+            onPress={() => router.push("/settings")}
+            hitSlop={8}
+          >
+            <Ionicons name="settings-outline" size={20} color={colors.text} />
+          </Pressable>
+        </View>
+
+        <View style={styles.dateNav}>
+          <Pressable
+            style={styles.navButton}
+            onPress={() => setDateKey(shiftDateKey(dateKey, -1))}
+            hitSlop={8}
+          >
+            <Ionicons name="chevron-back" size={18} color={colors.text} />
+          </Pressable>
+
+          <Pressable
+            style={styles.navCenter}
             onPress={() => setPickerOpen(!pickerOpen)}
             hitSlop={8}
           >
@@ -175,35 +194,23 @@ export default function Index() {
           </Pressable>
 
           <Pressable
-            style={styles.iconButton}
-            onPress={() => router.push("/settings")}
+            style={styles.navButton}
+            onPress={() => setDateKey(shiftDateKey(dateKey, 1))}
             hitSlop={8}
           >
-            <Ionicons name="settings-outline" size={20} color={colors.text} />
+            <Ionicons name="chevron-forward" size={18} color={colors.text} />
           </Pressable>
         </View>
 
-        <View style={styles.dateNav}>
+        {isToday ? null : (
           <Pressable
-            onPress={() => setDateKey(shiftDateKey(dateKey, -1))}
-            hitSlop={10}
+            style={styles.jumpToday}
+            onPress={() => setDateKey(todayKey())}
+            hitSlop={8}
           >
-            <Text style={styles.dateNavText}>‹ Previous</Text>
+            <Text style={styles.dateNavToday}>Jump to today</Text>
           </Pressable>
-
-          {isToday ? null : (
-            <Pressable onPress={() => setDateKey(todayKey())} hitSlop={10}>
-              <Text style={styles.dateNavToday}>Jump to today</Text>
-            </Pressable>
-          )}
-
-          <Pressable
-            onPress={() => setDateKey(shiftDateKey(dateKey, 1))}
-            hitSlop={10}
-          >
-            <Text style={styles.dateNavText}>Next ›</Text>
-          </Pressable>
-        </View>
+        )}
 
         {pickerOpen ? (
           Platform.OS === "ios" ? (
@@ -389,13 +396,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 48,
   },
-  headerRow: {
+  appBar: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 12,
   },
-  headerLeft: {
-    flex: 1,
-    marginRight: 12,
+  appName: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: colors.text,
+    letterSpacing: 0.3,
+  },
+  jumpToday: {
+    alignSelf: "center",
+    marginTop: 10,
   },
   titleRow: {
     flexDirection: "row",
@@ -429,26 +444,31 @@ const styles = StyleSheet.create({
     color: colors.calories,
   },
   title: {
-    fontSize: 34,
+    fontSize: 26,
     fontWeight: "700",
     color: colors.text,
-    marginTop: 12,
   },
   date: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.muted,
     marginTop: 2,
   },
   dateNav: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 14,
+    marginTop: 18,
   },
-  dateNavText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.calories,
+  navButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    backgroundColor: colors.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navCenter: {
+    flex: 1,
+    alignItems: "center",
   },
   dateNavToday: {
     fontSize: 13,
