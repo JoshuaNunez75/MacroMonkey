@@ -20,25 +20,41 @@ import {
     Profile,
 } from "../lib/profile";
 
-type Part = { key: string; value: number; color: string };
+type Part = { key: string; label: string; value: number; color: string };
 
-function SplitBar({ parts }: { parts: Part[] }) {
+function SplitBar({ title, parts }: { title: string; parts: Part[] }) {
     const total = parts.reduce((sum, part) => sum + part.value, 0);
 
-    if (total <= 0) {
-        return <View style={styles.barEmpty} />;
-    }
-
     return (
-        <View style={styles.bar}>
-            {parts
-                .filter((part) => part.value > 0)
-                .map((part) => (
-                    <View
-                        key={part.key}
-                        style={{ flex: part.value, backgroundColor: part.color }}
-                    />
+        <View style={styles.splitBlock}>
+            <Text style={styles.barLabel}>{title}</Text>
+
+            {total <= 0 ? (
+                <View style={styles.barEmpty} />
+            ) : (
+                <View style={styles.bar}>
+                    {parts
+                        .filter((part) => part.value > 0)
+                        .map((part) => (
+                            <View
+                                key={part.key}
+                                style={{ flex: part.value, backgroundColor: part.color }}
+                            />
+                        ))}
+                </View>
+            )}
+
+            <View style={styles.legend}>
+                {parts.map((part) => (
+                    <View key={part.key} style={styles.legendItem}>
+                        <View style={[styles.legendDot, { backgroundColor: part.color }]} />
+                        <Text style={styles.legendText}>
+                            {part.label}{" "}
+                            {total > 0 ? Math.round((part.value / total) * 100) : 0}%
+                        </Text>
+                    </View>
                 ))}
+            </View>
         </View>
     );
 }
@@ -78,21 +94,43 @@ export default function DayDetail() {
     const actualParts: Part[] = [
         {
             key: "protein",
+            label: "Protein",
             value: totals.protein * CALORIES_PER_GRAM.protein,
             color: colors.protein,
         },
         {
             key: "carbs",
+            label: "Carbs",
             value: totals.carbs * CALORIES_PER_GRAM.carbs,
             color: colors.carbs,
         },
-        { key: "fat", value: totals.fat * CALORIES_PER_GRAM.fat, color: colors.fat },
+        {
+            key: "fat",
+            label: "Fat",
+            value: totals.fat * CALORIES_PER_GRAM.fat,
+            color: colors.fat,
+        },
     ];
 
     const targetParts: Part[] = [
-        { key: "protein", value: profile.proteinPercent, color: colors.protein },
-        { key: "carbs", value: profile.carbsPercent, color: colors.carbs },
-        { key: "fat", value: profile.fatPercent, color: colors.fat },
+        {
+            key: "protein",
+            label: "Protein",
+            value: profile.proteinPercent,
+            color: colors.protein,
+        },
+        {
+            key: "carbs",
+            label: "Carbs",
+            value: profile.carbsPercent,
+            color: colors.carbs,
+        },
+        {
+            key: "fat",
+            label: "Fat",
+            value: profile.fatPercent,
+            color: colors.fat,
+        },
     ];
 
     const consumedCalories = totals.calories;
@@ -187,26 +225,15 @@ export default function DayDetail() {
                 </View>
 
                 <Text style={styles.sectionTitle}>Macro Split</Text>
-                <Text style={styles.sectionNote}>By share of calories</Text>
+                <Text style={styles.sectionNote}>
+                    Where each bar&apos;s calories came from — not progress toward goals
+                </Text>
 
-                <Text style={styles.barLabel}>Today</Text>
-                <SplitBar parts={actualParts} />
-
-                <Text style={styles.barLabel}>Target</Text>
-                <SplitBar parts={targetParts} />
-
-                <View style={styles.legend}>
-                    {macroRows.map((row) => (
-                        <View key={row.label} style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: row.color }]} />
-                            <Text style={styles.legendText}>
-                                {row.label} {sharePercent(row.calories)}%
-                            </Text>
-                        </View>
-                    ))}
-                </View>
+                <SplitBar title="Today" parts={actualParts} />
+                <SplitBar title="Target" parts={targetParts} />
 
                 <Text style={styles.sectionTitle}>Macros</Text>
+                <Text style={styles.sectionNote}>Progress toward today&apos;s targets</Text>
                 <View style={styles.table}>
                     {macroRows.map((row) => (
                         <View key={row.label} style={styles.tableRow}>
@@ -347,13 +374,15 @@ const styles = StyleSheet.create({
         color: colors.muted,
         marginTop: 2,
     },
+    splitBlock: {
+        marginTop: 18,
+    },
     barLabel: {
         fontSize: 12,
         fontWeight: "600",
         letterSpacing: 0.5,
         color: colors.muted,
-        marginTop: 16,
-        marginBottom: 6,
+        marginBottom: 8,
     },
     bar: {
         flexDirection: "row",
@@ -372,7 +401,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 16,
-        marginTop: 14,
+        marginTop: 10,
     },
     legendItem: {
         flexDirection: "row",
