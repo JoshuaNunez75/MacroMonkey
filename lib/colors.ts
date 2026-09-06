@@ -11,4 +11,5 @@ export const colors = {
   pill: "#20242C",
   overBg: "rgba(248, 113, 113, 0.16)",
   overText: "#FCA5A5",
+  accentSoft: "rgba(52, 211, 153, 0.35)",
 };

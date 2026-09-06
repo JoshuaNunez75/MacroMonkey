@@ -101,11 +101,13 @@ function MacroStat({
 
 export default function FoodDetail() {
     const router = useRouter();
-    const { id, entryId } = useLocalSearchParams<{
+    const { id, entryId, date } = useLocalSearchParams<{
         id: string;
         entryId?: string;
+        date?: string;
     }>();
 
+    const dateKey = date ?? todayKey();
     const [food, setFood] = useState<Food | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [servingId, setServingId] = useState<string | null>(null);
@@ -132,7 +134,7 @@ export default function FoodDetail() {
                 setProfile(savedProfile);
 
                 if (entryId) {
-                    const existing = await getEntry(todayKey(), entryId);
+                    const existing = await getEntry(dateKey, entryId);
                     if (!cancelled && existing) {
                         setServingId(existing.serving.id);
                         setAmount(String(existing.amount));
@@ -150,7 +152,7 @@ export default function FoodDetail() {
         return () => {
             cancelled = true;
         };
-    }, [id, entryId]);
+    }, [id, entryId, dateKey]);
 
     function renderBody() {
         if (error) {
@@ -185,13 +187,13 @@ export default function FoodDetail() {
 
             try {
                 if (entryId) {
-                    await updateEntry(todayKey(), entryId, {
+                    await updateEntry(dateKey, entryId, {
                         serving,
                         amount: multiplier,
                     });
                 } else {
                     await addEntry({
-                        date: todayKey(),
+                        date: dateKey,
                         foodId: food.id,
                         name: food.name,
                         brand: food.brand,

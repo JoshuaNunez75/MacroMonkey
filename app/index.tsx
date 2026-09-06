@@ -199,14 +199,9 @@ export default function Index() {
 
           <Pressable
             onPress={() => setDateKey(shiftDateKey(dateKey, 1))}
-            disabled={isToday}
             hitSlop={10}
           >
-            <Text
-              style={[styles.dateNavText, isToday && styles.dateNavDisabled]}
-            >
-              Next ›
-            </Text>
+            <Text style={styles.dateNavText}>Next ›</Text>
           </Pressable>
         </View>
 
@@ -217,7 +212,6 @@ export default function Index() {
                 value={dateFromKey(dateKey)}
                 mode="date"
                 display="inline"
-                maximumDate={new Date()}
                 onChange={onDateChange}
                 themeVariant="dark"
                 accentColor={colors.calories}
@@ -234,7 +228,6 @@ export default function Index() {
               value={dateFromKey(dateKey)}
               mode="date"
               display="default"
-              maximumDate={new Date()}
               onChange={onDateChange}
             />
           )
@@ -294,6 +287,14 @@ export default function Index() {
           <Text style={styles.cardHint}>Tap for full breakdown</Text>
         </Pressable>
 
+        <Pressable
+          style={styles.searchBar}
+          onPress={() => router.push(`/search?date=${dateKey}`)}
+        >
+          <Ionicons name="search" size={18} color={colors.calories} />
+          <Text style={styles.searchBarText}>Search for a food to log</Text>
+        </Pressable>
+
         <View style={styles.mealsHeader}>
           <Text style={styles.sectionTitle}>Meals</Text>
           {entries.length > 0 ? (
@@ -318,13 +319,10 @@ export default function Index() {
               <Pressable
                 key={entry.id}
                 style={styles.entry}
-                onPress={
-                  isToday
-                    ? () =>
-                      router.push(
-                        `/food/${entry.foodId}?entryId=${entry.id}`
-                      )
-                    : undefined
+                onPress={() =>
+                  router.push(
+                    `/food/${entry.foodId}?entryId=${entry.id}&date=${dateKey}`
+                  )
                 }
               >
                 <View style={styles.entryMain}>
@@ -373,19 +371,6 @@ export default function Index() {
           </View>
         )}
 
-        {isToday ? (
-          <Pressable
-            style={styles.addButton}
-            onPress={() => router.push("/search")}
-          >
-            <Text style={styles.addButtonText}>+ Add food</Text>
-          </Pressable>
-        ) : (
-          <Text style={styles.pastDayNote}>
-            Viewing a past day. Jump to today to add or edit food — logging to
-            past days is the next step.
-          </Text>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -465,19 +450,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.calories,
   },
-  dateNavDisabled: {
-    color: colors.border,
-  },
   dateNavToday: {
     fontSize: 13,
     color: colors.muted,
-  },
-  pastDayNote: {
-    fontSize: 13,
-    color: colors.muted,
-    textAlign: "center",
-    lineHeight: 19,
-    marginTop: 24,
   },
   card: {
     backgroundColor: colors.card,
@@ -704,16 +679,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.muted,
   },
-  addButton: {
-    backgroundColor: colors.calories,
-    borderRadius: 12,
-    paddingVertical: 14,
+  searchBar: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 24,
+    gap: 10,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.accentSoft,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 16,
   },
-  addButtonText: {
-    color: colors.bg,
+  searchBarText: {
     fontSize: 15,
-    fontWeight: "600",
+    color: colors.muted,
   },
 });

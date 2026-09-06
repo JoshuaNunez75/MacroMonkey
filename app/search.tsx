@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
@@ -48,6 +48,7 @@ function FoodRow({ food, onPress }: { food: Food; onPress: () => void }) {
 
 export default function Search() {
     const router = useRouter();
+    const { date } = useLocalSearchParams<{ date?: string }>();
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<Food[] | null>(null);
     const [loading, setLoading] = useState(false);
@@ -121,7 +122,10 @@ export default function Search() {
                 data={results}
                 keyExtractor={(food) => food.id}
                 renderItem={({ item }) => (
-                    <FoodRow food={item} onPress={() => router.push(`/food/${item.id}`)} />
+                    <FoodRow food={item} onPress={() =>
+                            router.push(`/food/${item.id}${date ? `?date=${date}` : ""}`)
+                        }
+                    />
                 )}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={styles.listContent}
