@@ -173,3 +173,20 @@ export function microTotalsFor(entries: LoggedEntry[]): MicroTotal[] {
         return { label: field.label, unit: field.unit, value, reportedBy };
     }).filter((row) => row.reportedBy > 0);
 }
+
+export function weekStartFor(key: string): string {
+    return shiftDateKey(key, -dateFromKey(key).getDay());
+}
+
+export function weekDaysFor(key: string): string[] {
+    const start = weekStartFor(key);
+    return [0, 1, 2, 3, 4, 5, 6].map((offset) => shiftDateKey(start, offset));
+}
+
+export function weekdayLetterFor(key: string): string {
+    return WEEKDAYS[dateFromKey(key).getDay()][0];
+}
+
+export function dayOfMonthFor(key: string): number {
+    return dateFromKey(key).getDate();
+}
