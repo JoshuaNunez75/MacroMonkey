@@ -65,6 +65,7 @@ export default function Index() {
   const [entries, setEntries] = useState<LoggedEntry[]>([]);
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [showMicros, setShowMicros] = useState(false);
+  const [showPercent, setShowPercent] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -92,6 +93,25 @@ export default function Index() {
   async function remove(id: string) {
     await deleteEntry(todayKey(), id);
     setEntries(await getEntries(todayKey()));
+  }
+
+  function macroText(label: string, value: number, goal: number) {
+    if (showPercent) {
+      const percent = goal > 0 ? Math.round((value / goal) * 100) : 0;
+      return `${label} ${percent}%`;
+    }
+    return `${label} ${formatGrams(value)}g`;
+  }
+
+  function calorieText(value: number) {
+    if (showPercent) {
+      const percent =
+        profile.calorieGoal > 0
+          ? Math.round((value / profile.calorieGoal) * 100)
+          : 0;
+      return `${percent}% cals`;
+    }
+    return `${Math.round(value)} cal`;
   }
 
   const totals = totalsFor(entries);
@@ -219,7 +239,16 @@ export default function Index() {
           </>
         ) : null}
 
-        <Text style={styles.sectionTitle}>Meals</Text>
+        <View style={styles.mealsHeader}>
+          <Text style={styles.sectionTitle}>Meals</Text>
+          {entries.length > 0 ? (
+            <Pressable onPress={() => setShowPercent(!showPercent)} hitSlop={10}>
+              <Text style={styles.mealsToggle}>
+                {showPercent ? "Show grams" : "Show % of goal"}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
 
         {entries.length === 0 ? (
           <View style={styles.emptyCard}>
@@ -239,16 +268,39 @@ export default function Index() {
                 }
               >
                 <View style={styles.entryMain}>
-                  <Text style={styles.entryName} numberOfLines={1}>
-                    {entry.name}
-                  </Text>
+                  <View style={styles.entryTop}>
+                    <Text style={styles.entryName} numberOfLines={1}>
+                      {entry.name}
+                    </Text>
+                    <Text style={styles.entryCalories}>
+                      {calorieText(entry.serving.calories * entry.amount)}
+                    </Text>
+                  </View>
+
                   <Text style={styles.entryServing} numberOfLines={1}>
                     {formatGrams(entry.amount)} × {entry.serving.description}
                   </Text>
+
+                  <View style={styles.entryMacros}>
+                    <Text style={[styles.entryMacro, { color: colors.protein }]}>
+                      {macroText(
+                        "P",
+                        entry.serving.protein * entry.amount,
+                        targets.protein
+                      )}
+                    </Text>
+                    <Text style={[styles.entryMacro, { color: colors.carbs }]}>
+                      {macroText(
+                        "C",
+                        entry.serving.carbs * entry.amount,
+                        targets.carbs
+                      )}
+                    </Text>
+                    <Text style={[styles.entryMacro, { color: colors.fat }]}>
+                      {macroText("F", entry.serving.fat * entry.amount, targets.fat)}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.entryCalories}>
-                  {Math.round(entry.serving.calories * entry.amount)}
-                </Text>
                 <Pressable
                   onPress={() => remove(entry.id)}
                   hitSlop={10}
@@ -433,12 +485,22 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: 8,
   },
+  mealsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 32,
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "600",
     color: colors.text,
-    marginTop: 32,
-    marginBottom: 12,
+  },
+  mealsToggle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.calories,
   },
   emptyCard: {
     backgroundColor: colors.card,
@@ -476,10 +538,26 @@ const styles = StyleSheet.create({
   entryMain: {
     flex: 1,
   },
+  entryTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
   entryName: {
+    flex: 1,
     fontSize: 15,
     fontWeight: "600",
     color: colors.text,
+  },
+  entryMacros: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  entryMacro: {
+    fontSize: 12,
+    fontWeight: "700",
   },
   entryServing: {
     fontSize: 13,
