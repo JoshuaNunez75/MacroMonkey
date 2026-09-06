@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ring } from "../components/Ring";
 import { colors } from "../lib/colors";
 import {
   deleteEntry,
@@ -19,6 +20,40 @@ import {
   macroGrams,
   Profile,
 } from "../lib/profile";
+
+function MacroRing({
+  label,
+  value,
+  goal,
+  color,
+}: {
+  label: string;
+  value: number;
+  goal: number;
+  color: string;
+}) {
+  const progress = goal > 0 ? value / goal : 0;
+
+  return (
+    <View style={styles.macro}>
+      <Ring
+        size={66}
+        strokeWidth={7}
+        progress={progress}
+        color={progress > 1 ? colors.text : color}
+        trackColor={colors.border}
+      >
+        <Text style={[styles.macroPercent, { color }]}>
+          {Math.round(progress * 100)}%
+        </Text>
+      </Ring>
+      <Text style={styles.macroLabel}>{label}</Text>
+      <Text style={styles.macroValue}>
+        {formatGrams(value)} / {Math.round(goal)}g
+      </Text>
+    </View>
+  );
+}
 
 export default function Index() {
   const router = useRouter();
@@ -58,6 +93,10 @@ export default function Index() {
   const microTotals = microTotalsFor(entries);
   const targets = macroGrams(profile);
   const remaining = Math.max(0, profile.calorieGoal - totals.calories);
+  const calorieProgress =
+    profile.calorieGoal > 0 ? totals.calories / profile.calorieGoal : 0;
+  const calorieColor =
+    calorieProgress > 1 ? colors.protein : colors.calories;
 
   const dateLabel = new Date().toLocaleDateString(undefined, {
     weekday: "long",
@@ -84,36 +123,45 @@ export default function Index() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.calorieNumber}>{Math.round(totals.calories)}</Text>
-          <Text style={styles.calorieGoal}>
-            of {profile.calorieGoal.toLocaleString()} cal
-          </Text>
+          <Ring
+            size={188}
+            strokeWidth={15}
+            progress={calorieProgress}
+            color={calorieColor}
+            trackColor={colors.border}
+          >
+            <Text style={[styles.calorieNumber, { color: calorieColor }]}>
+              {Math.round(totals.calories).toLocaleString()}
+            </Text>
+            <Text style={styles.calorieGoal}>
+              of {profile.calorieGoal.toLocaleString()}
+            </Text>
+          </Ring>
+
           <Text style={styles.calorieRemaining}>
-            {Math.round(remaining).toLocaleString()} remaining
+            {calorieProgress > 1 ? `${Math.round(totals.calories - profile.calorieGoal).toLocaleString()} over goal`
+              : `${Math.round(remaining).toLocaleString()} remaining`}
           </Text>
 
           <View style={styles.macroRow}>
-            <View style={styles.macro}>
-              <Text style={[styles.macroValue, { color: colors.protein }]}>
-                {formatGrams(totals.protein)}g
-              </Text>
-              <Text style={styles.macroLabel}>Protein</Text>
-              <Text style={styles.macroGoal}>of {Math.round(targets.protein)}g</Text>
-            </View>
-            <View style={styles.macro}>
-              <Text style={[styles.macroValue, { color: colors.carbs }]}>
-                {formatGrams(totals.carbs)}g
-              </Text>
-              <Text style={styles.macroLabel}>Carbs</Text>
-              <Text style={styles.macroGoal}>of {Math.round(targets.carbs)}g</Text>
-            </View>
-            <View style={styles.macro}>
-              <Text style={[styles.macroValue, { color: colors.fat }]}>
-                {formatGrams(totals.fat)}g
-              </Text>
-              <Text style={styles.macroLabel}>Fat</Text>
-              <Text style={styles.macroGoal}>of {Math.round(targets.fat)}g</Text>
-            </View>
+            <MacroRing
+              label="Protein"
+              value={totals.protein}
+              goal={targets.protein}
+              color={colors.protein}
+            />
+            <MacroRing
+              label="Carbs"
+              value={totals.carbs}
+              goal={targets.carbs}
+              color={colors.carbs}
+            />
+            <MacroRing
+              label="Fat"
+              value={totals.fat}
+              goal={targets.fat}
+              color={colors.fat}
+            />
           </View>
         </View>
 
@@ -252,19 +300,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   calorieNumber: {
-    fontSize: 56,
+    fontSize: 40,
     fontWeight: "700",
-    color: colors.calories,
   },
   calorieGoal: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.muted,
     marginTop: 2,
   },
   calorieRemaining: {
     fontSize: 13,
     color: colors.muted,
-    marginTop: 8,
+    marginTop: 18,
+  },
+  macroPercent: {
+    fontSize: 13,
+    fontWeight: "700",
   },
   macroRow: {
     flexDirection: "row",
@@ -272,25 +323,22 @@ const styles = StyleSheet.create({
     width: "100%",
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingTop: 20,
+    paddingTop: 22,
   },
   macro: {
     flex: 1,
     alignItems: "center",
   },
   macroValue: {
-    fontSize: 20,
-    fontWeight: "600",
-  },
-  macroLabel: {
-    fontSize: 13,
-    color: colors.text,
-    marginTop: 4,
-  },
-  macroGoal: {
     fontSize: 12,
     color: colors.muted,
     marginTop: 1,
+  },
+  macroLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.text,
+    marginTop: 8,
   },
   microsHeader: {
     flexDirection: "row",
