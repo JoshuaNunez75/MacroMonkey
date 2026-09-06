@@ -1,10 +1,11 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../lib/colors";
 import {
+    fullDateFor,
     getEntries,
     LoggedEntry,
     microTotalsFor,
@@ -61,6 +62,8 @@ function SplitBar({ title, parts }: { title: string; parts: Part[] }) {
 
 export default function DayDetail() {
     const router = useRouter();
+    const { date } = useLocalSearchParams<{ date?: string }>();
+    const dateKey = date ?? todayKey();
     const [entries, setEntries] = useState<LoggedEntry[]>([]);
     const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
 
@@ -70,7 +73,7 @@ export default function DayDetail() {
 
             async function load() {
                 const [list, savedProfile] = await Promise.all([
-                    getEntries(todayKey()),
+                    getEntries(dateKey),
                     loadProfile(),
                 ]);
                 if (!cancelled) {
@@ -84,7 +87,7 @@ export default function DayDetail() {
             return () => {
                 cancelled = true;
             };
-        }, [])
+        }, [dateKey])
     );
 
     const totals = totalsFor(entries);
@@ -178,12 +181,6 @@ export default function DayDetail() {
         return Math.round((value / consumedCalories) * 100);
     }
 
-    const dateLabel = new Date().toLocaleDateString(undefined, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-    });
-
     return (
         <SafeAreaView style={styles.screen}>
             <StatusBar style="light" />
@@ -196,7 +193,7 @@ export default function DayDetail() {
 
             <ScrollView contentContainerStyle={styles.content}>
                 <Text style={styles.title}>Full Breakdown</Text>
-                <Text style={styles.subtitle}>{dateLabel}</Text>
+                <Text style={styles.subtitle}>{fullDateFor(dateKey)}</Text>
 
                 <Text style={styles.sectionTitle}>Calories</Text>
                 <View style={styles.summary}>

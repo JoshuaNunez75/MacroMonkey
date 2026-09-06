@@ -15,12 +15,45 @@ export type LoggedEntry = {
 
 const KEY_PREFIX = "diary:";
 
-export function todayKey(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
+export function dateKeyFor(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+}
+
+export function todayKey(): string {
+    return dateKeyFor(new Date());
+}
+
+function dateFromKey(key: string): Date {
+    const [year, month, day] = key.split("-").map(Number);
+    return new Date(year, month - 1, day);
+}
+
+export function shiftDateKey(key: string, days: number): string {
+    const date = dateFromKey(key);
+    date.setDate(date.getDate() + days);
+    return dateKeyFor(date);
+}
+
+export function fullDateFor(key: string): string {
+    return dateFromKey(key).toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+    });
+}
+
+export function dateLabelFor(key: string): string {
+    const today = todayKey();
+    if (key === today) {
+        return "Today";
+    }
+    if (key === shiftDateKey(today, -1)) {
+        return "Yesterday";
+    }
+    return fullDateFor(key);
 }
 
 export async function getEntries(date: string): Promise<LoggedEntry[]> {

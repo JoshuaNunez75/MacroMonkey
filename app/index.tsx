@@ -6,9 +6,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ring } from "../components/Ring";
 import { colors } from "../lib/colors";
 import {
+  dateLabelFor,
   deleteEntry,
+  fullDateFor,
   getEntries,
   LoggedEntry,
+  shiftDateKey,
   todayKey,
   totalsFor,
 } from "../lib/diary";
@@ -64,6 +67,7 @@ export default function Index() {
   const [entries, setEntries] = useState<LoggedEntry[]>([]);
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [showPercent, setShowPercent] = useState(false);
+  const [dateKey, setDateKey] = useState(todayKey());
 
   useFocusEffect(
     useCallback(() => {
@@ -71,7 +75,7 @@ export default function Index() {
 
       async function load() {
         const [list, savedProfile] = await Promise.all([
-          getEntries(todayKey()),
+          getEntries(dateKey),
           loadProfile(),
         ]);
         if (!cancelled) {
@@ -85,12 +89,12 @@ export default function Index() {
       return () => {
         cancelled = true;
       };
-    }, [])
+    }, [dateKey])
   );
 
   async function remove(id: string) {
-    await deleteEntry(todayKey(), id);
-    setEntries(await getEntries(todayKey()));
+    await deleteEntry(dateKey, id);
+    setEntries(await getEntries(dateKey));
   }
 
   function macroText(label: string, value: number, goal: number) {
@@ -118,11 +122,7 @@ export default function Index() {
   const calorieProgress = profile.calorieGoal > 0 ? totals.calories / profile.calorieGoal : 0;
   const calorieOver = calorieProgress > 1;
 
-  const dateLabel = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  const isToday = dateKey === todayKey();
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -134,15 +134,42 @@ export default function Index() {
       >
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.title}>Today</Text>
-            <Text style={styles.date}>{dateLabel}</Text>
+            <Text style={styles.title}>{dateLabelFor(dateKey)}</Text>
+            <Text style={styles.date}>{fullDateFor(dateKey)}</Text>
           </View>
           <Pressable onPress={() => router.push("/settings")} hitSlop={10}>
             <Text style={styles.settingsLink}>Goals</Text>
           </Pressable>
         </View>
 
-        <Pressable style={styles.card} onPress={() => router.push("/day")}>
+        <View style={styles.dateNav}>
+          <Pressable
+            onPress={() => setDateKey(shiftDateKey(dateKey, -1))}
+            hitSlop={10}
+          >
+            <Text style={styles.dateNavText}>‹ Previous</Text>
+          </Pressable>
+
+          {isToday ? null : (
+            <Pressable onPress={() => setDateKey(todayKey())} hitSlop={10}>
+              <Text style={styles.dateNavToday}>Jump to today</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => setDateKey(shiftDateKey(dateKey, 1))}
+            disabled={isToday}
+            hitSlop={10}
+          >
+            <Text
+              style={[styles.dateNavText, isToday && styles.dateNavDisabled]}
+            >
+              Next ›
+            </Text>
+          </Pressable>
+        </View>
+
+        <Pressable style={styles.card} onPress={() => router.push(`/day?date=${dateKey}`)}>
           <Ring
             size={188}
             strokeWidth={15}
@@ -220,8 +247,13 @@ export default function Index() {
               <Pressable
                 key={entry.id}
                 style={styles.entry}
-                onPress={() =>
-                  router.push(`/food/${entry.foodId}?entryId=${entry.id}`)
+                onPress={
+                  isToday
+                    ? () =>
+                      router.push(
+                        `/food/${entry.foodId}?entryId=${entry.id}`
+                      )
+                    : undefined
                 }
               >
                 <View style={styles.entryMain}>
@@ -270,9 +302,19 @@ export default function Index() {
           </View>
         )}
 
-        <Pressable style={styles.addButton} onPress={() => router.push("/search")}>
-          <Text style={styles.addButtonText}>+ Add food</Text>
-        </Pressable>
+        {isToday ? (
+          <Pressable
+            style={styles.addButton}
+            onPress={() => router.push("/search")}
+          >
+            <Text style={styles.addButtonText}>+ Add food</Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.pastDayNote}>
+            Viewing a past day. Jump to today to add or edit food — logging to
+            past days is the next step.
+          </Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -312,6 +354,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.muted,
     marginTop: 2,
+  },
+  dateNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 14,
+  },
+  dateNavText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.calories,
+  },
+  dateNavDisabled: {
+    color: colors.border,
+  },
+  dateNavToday: {
+    fontSize: 13,
+    color: colors.muted,
+  },
+  pastDayNote: {
+    fontSize: 13,
+    color: colors.muted,
+    textAlign: "center",
+    lineHeight: 19,
+    marginTop: 24,
   },
   card: {
     backgroundColor: colors.card,
