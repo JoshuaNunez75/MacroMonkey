@@ -11,6 +11,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FatSecretAttribution } from "../components/FatSecretAttribution";
 import { colors } from "../lib/colors";
 import { Food, searchFoods, suggestFoods } from "../lib/foodApi";
 import { formatGrams } from "../lib/format";
@@ -123,8 +124,8 @@ export default function Search() {
                 keyExtractor={(food) => food.id}
                 renderItem={({ item }) => (
                     <FoodRow food={item} onPress={() =>
-                            router.push(`/food/${item.id}${date ? `?date=${date}` : ""}`)
-                        }
+                        router.push(`/food/${item.id}${date ? `?date=${date}` : ""}`)
+                    }
                     />
                 )}
                 keyboardShouldPersistTaps="handled"
@@ -184,6 +185,7 @@ export default function Search() {
             ) : null}
 
             {renderBody()}
+            <FatSecretAttribution />
         </SafeAreaView>
     );
 }

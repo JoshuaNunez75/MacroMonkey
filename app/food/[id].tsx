@@ -11,6 +11,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FatSecretAttribution } from "../../components/FatSecretAttribution";
 import { colors } from "../../lib/colors";
 import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
@@ -335,6 +336,8 @@ export default function FoodDetail() {
                 </Pressable>
 
                 {logError ? <Text style={styles.error}>{logError}</Text> : null}
+
+                <FatSecretAttribution />
             </ScrollView >
         );
     }

@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { messageForAuthError, signIn, signUp } from "../lib/auth";
 import { colors } from "../lib/colors";
+import { FatSecretAttribution } from "./FatSecretAttribution";
 
 export function SignInScreen() {
     const [creating, setCreating] = useState(false);
@@ -96,6 +97,7 @@ export function SignInScreen() {
                     </Text>
                 </Pressable>
             </KeyboardAvoidingView>
+            <FatSecretAttribution />
         </SafeAreaView>
     );
 }
