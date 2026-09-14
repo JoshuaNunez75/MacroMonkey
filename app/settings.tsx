@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { signOutUser } from "../lib/auth";
 import { colors } from "../lib/colors";
 import {
   ACTIVITY_LEVELS,
@@ -211,17 +212,17 @@ export default function Settings() {
 
   async function save() {
     setSaving(true);
-        await saveProfile({
-        calorieGoal: num(calories),
-        proteinPercent: num(macros.protein.pct),
-        carbsPercent: num(macros.carbs.pct),
-        fatPercent: num(macros.fat.pct),
-        sex: body.sex,
-        age: num(body.age),
-        heightIn: num(body.heightFt) * 12 + num(body.heightIn),
-        weightLb: num(body.weightLb),
-        activity: body.activity,
-        weeklyChangeLb: body.weeklyChangeLb,
+    await saveProfile({
+      calorieGoal: num(calories),
+      proteinPercent: num(macros.protein.pct),
+      carbsPercent: num(macros.carbs.pct),
+      fatPercent: num(macros.fat.pct),
+      sex: body.sex,
+      age: num(body.age),
+      heightIn: num(body.heightFt) * 12 + num(body.heightIn),
+      weightLb: num(body.weightLb),
+      activity: body.activity,
+      weeklyChangeLb: body.weeklyChangeLb,
     });
     setSaving(false);
     router.back();
@@ -447,6 +448,10 @@ export default function Settings() {
             {saving ? "Saving…" : "Save goals"}
           </Text>
         </Pressable>
+
+        <Pressable style={styles.signOut} onPress={signOutUser}>
+          <Text style={styles.signOutText}>Sign out</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -655,5 +660,15 @@ const styles = StyleSheet.create({
     color: colors.bg,
     fontSize: 16,
     fontWeight: "700",
+  },
+  signOut: {
+    alignSelf: "center",
+    marginTop: 28,
+    paddingVertical: 10,
+  },
+  signOutText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.protein,
   },
 });
