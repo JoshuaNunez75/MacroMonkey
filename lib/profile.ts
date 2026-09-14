@@ -1,6 +1,13 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
 
-const KEY = "profile";
+function profileDoc() {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+        throw new Error("Not signed in");
+    }
+    return doc(db, "users", uid, "profile", "main");
+}
 
 export const CALORIES_PER_GRAM = {
     protein: 4,
@@ -58,20 +65,19 @@ export const DEFAULT_PROFILE: Profile = {
 };
 
 export async function loadProfile(): Promise<Profile> {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (!raw) {
-        return DEFAULT_PROFILE;
-    }
     try {
-        const parsed = JSON.parse(raw);
-        return { ...DEFAULT_PROFILE, ...parsed };
+        const snapshot = await getDoc(profileDoc());
+        if (!snapshot.exists()) {
+            return DEFAULT_PROFILE;
+        }
+        return { ...DEFAULT_PROFILE, ...snapshot.data() } as Profile;
     } catch {
         return DEFAULT_PROFILE;
     }
 }
 
 export async function saveProfile(profile: Profile): Promise<void> {
-    await AsyncStorage.setItem(KEY, JSON.stringify(profile));
+    await setDoc(profileDoc(), profile);
 }
 
 export function macroGrams(profile: Profile) {
@@ -108,7 +114,7 @@ export function maintenanceFor(profile: Profile): number {
 
 export function suggestedCalories(profile: Profile): number {
     const dailyAdjustment = (profile.weeklyChangeLb * CALORIES_PER_LB) / 7;
-  const raw = maintenanceFor(profile) - dailyAdjustment;
-  const rounded = Math.round(raw / GOAL_ROUNDING) * GOAL_ROUNDING;
-  return Math.max(MINIMUM_CALORIES, rounded);
+    const raw = maintenanceFor(profile) - dailyAdjustment;
+    const rounded = Math.round(raw / GOAL_ROUNDING) * GOAL_ROUNDING;
+    return Math.max(MINIMUM_CALORIES, rounded);
 }
