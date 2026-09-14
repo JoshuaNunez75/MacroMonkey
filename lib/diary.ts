@@ -1,4 +1,15 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    updateDoc,
+    where,
+} from "firebase/firestore";
+import { auth, db } from "./firebase";
 import { Serving } from "./foodApi";
 import { MICRO_FIELDS } from "./nutrients";
 
@@ -13,7 +24,21 @@ export type LoggedEntry = {
     amount: number;
 };
 
-const KEY_PREFIX = "diary:";
+function requireUid(): string {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+        throw new Error("Not signed in");
+    }
+    return uid;
+}
+
+function entriesCollection() {
+    return collection(db, "users", requireUid(), "entries");
+}
+
+function entryDoc(id: string) {
+    return doc(db, "users", requireUid(), "entries", id);
+}
 
 export function dateKeyFor(date: Date): string {
     const year = date.getFullYear();
@@ -80,42 +105,28 @@ export function dateLabelFor(key: string): string {
 }
 
 export async function getEntries(date: string): Promise<LoggedEntry[]> {
-    const raw = await AsyncStorage.getItem(KEY_PREFIX + date);
-    if (!raw) {
-        return [];
-    }
-    try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
+    const snapshot = await getDocs(
+        query(entriesCollection(), where("date", "==", date))
+    );
+
+    const entries = snapshot.docs.map(
+        (item) => ({ id: item.id, ...item.data() }) as LoggedEntry
+    );
+
+    return entries.sort((a, b) => a.loggedAt.localeCompare(b.loggedAt));
 }
 
 export async function addEntry(
     entry: Omit<LoggedEntry, "id" | "loggedAt">
 ): Promise<LoggedEntry> {
-    const saved: LoggedEntry = {
-        ...entry,
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        loggedAt: new Date().toISOString(),
-    };
+    const loggedAt = new Date().toISOString();
+    const reference = await addDoc(entriesCollection(), { ...entry, loggedAt });
 
-    const existing = await getEntries(entry.date);
-    await AsyncStorage.setItem(
-        KEY_PREFIX + entry.date,
-        JSON.stringify([...existing, saved])
-    );
-
-    return saved;
+    return { ...entry, id: reference.id, loggedAt };
 }
 
 export async function deleteEntry(date: string, id: string): Promise<void> {
-    const existing = await getEntries(date);
-    await AsyncStorage.setItem(
-        KEY_PREFIX + date,
-        JSON.stringify(existing.filter((e) => e.id !== id))
-    );
+    await deleteDoc(entryDoc(id));
 }
 
 export function totalsFor(entries: LoggedEntry[]) {
@@ -134,8 +145,13 @@ export async function getEntry(
     date: string,
     id: string
 ): Promise<LoggedEntry | null> {
-    const entries = await getEntries(date);
-    return entries.find((entry) => entry.id === id) ?? null;
+    const snapshot = await getDoc(entryDoc(id));
+
+    if (!snapshot.exists()) {
+        return null;
+    }
+
+    return { id: snapshot.id, ...snapshot.data() } as LoggedEntry;
 }
 
 export async function updateEntry(
@@ -143,11 +159,7 @@ export async function updateEntry(
     id: string,
     changes: { serving: Serving; amount: number }
 ): Promise<void> {
-    const entries = await getEntries(date);
-    const updated = entries.map((entry) =>
-        entry.id === id ? { ...entry, ...changes } : entry
-    );
-    await AsyncStorage.setItem(KEY_PREFIX + date, JSON.stringify(updated));
+    await updateDoc(entryDoc(id), changes);
 }
 
 export type MicroTotal = {
@@ -192,12 +204,21 @@ export function dayOfMonthFor(key: string): number {
 }
 
 export async function daysWithEntries(keys: string[]): Promise<string[]> {
-    const results = await Promise.all(
-        keys.map(async (key) => ({
-            key,
-            hasEntries: (await getEntries(key)).length > 0,
-        }))
+    if (keys.length === 0) {
+        return [];
+    }
+
+    const sorted = [...keys].sort();
+    const snapshot = await getDocs(
+        query(
+            entriesCollection(),
+            where("date", ">=", sorted[0]),
+            where("date", "<=", sorted[sorted.length - 1])
+        )
     );
 
-    return results.filter((row) => row.hasEntries).map((row) => row.key);
+    const found = new Set<string>();
+    snapshot.forEach((item) => found.add(item.data().date as string));
+
+    return keys.filter((key) => found.has(key));
 }
