@@ -1,8 +1,16 @@
-const TOKEN_URL = "https://oauth.fatsecret.com/connect/token";
-const SEARCH_URL = "https://platform.fatsecret.com/rest/foods/search/v5";
-const AUTOCOMPLETE_URL = "https://platform.fatsecret.com/rest/food/autocomplete/v2";
-const FOOD_URL = "https://platform.fatsecret.com/rest/food/v5";
-const BARCODE_URL = "https://platform.fatsecret.com/rest/food/barcode/find-by-id/v2";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "./firebase";
+
+type FatSecretRequest =
+  | { action: "search"; query: string }
+  | { action: "autocomplete"; query: string }
+  | { action: "get"; id: string }
+  | { action: "barcode"; barcode: string };
+
+const callFatSecret = httpsCallable<FatSecretRequest, any>(
+  functions,
+  "fatsecret"
+);
 
 export type Serving = {
   id: string;
@@ -40,59 +48,9 @@ export type Food = {
   servings: Serving[];
 };
 
-let cachedToken: string | null = null;
-let tokenExpiresAt = 0;
-
-async function getAccessToken(): Promise<string> {
-  if (cachedToken !== null && Date.now() < tokenExpiresAt) {
-    return cachedToken;
-  }
-
-  const id = process.env.EXPO_PUBLIC_FATSECRET_CLIENT_ID;
-  const secret = process.env.EXPO_PUBLIC_FATSECRET_CLIENT_SECRET;
-
-  if (!id || !secret) {
-    throw new Error("Missing FatSecret credentials — check your .env file.");
-  }
-
-  const response = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: {
-      Authorization: "Basic " + btoa(`${id}:${secret}`),
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials&scope=premier%20barcode",
-  });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Token request failed (${response.status}): ${detail}`);
-  }
-
-  const data = await response.json();
-  cachedToken = data.access_token;
-  tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
-  return data.access_token;
-}
-
-async function apiGet(url: string): Promise<any> {
-  const token = await getAccessToken();
-
-  const response = await fetch(url, {
-    headers: { Authorization: "Bearer " + token },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
-  }
-
-  const data = await response.json();
-
-  if (data?.error) {
-    throw new Error(`FatSecret error ${data.error.code}: ${data.error.message}`);
-  }
-
-  return data;
+async function apiGet(request: FatSecretRequest): Promise<any> {
+  const result = await callFatSecret(request);
+  return result.data;
 }
 
 function optionalNumber(value: any): number | undefined {
@@ -146,11 +104,28 @@ function toFood(raw: any): Food {
     ...list.filter((s: any) => s.is_default !== "1"),
   ];
 
+  const servings = defaultFirst.map(toServing);
+
+  // FatSecret sometimes reuses a serving_id within a single food. Ids must be
+  // unique — they key the list in the UI and identify the selected serving.
+  const seen = new Set<string>();
+  for (const serving of servings) {
+    const base = serving.id || "serving";
+    let unique = base;
+    let suffix = 1;
+    while (seen.has(unique)) {
+      unique = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    seen.add(unique);
+    serving.id = unique;
+  }
+
   return {
     id: raw.food_id,
     name: raw.food_name,
     brand: raw.brand_name,
-    servings: defaultFirst.map(toServing),
+    servings,
   };
 }
 
@@ -160,11 +135,7 @@ export async function searchFoods(query: string): Promise<Food[]> {
     return [];
   }
 
-  const data = await apiGet(
-    SEARCH_URL +
-      "?search_expression=" + encodeURIComponent(trimmed) +
-      "&format=json&max_results=20&flag_default_serving=true"
-  );
+  const data = await apiGet({ action: "search", query: trimmed });
 
   const raw = data?.foods_search?.results?.food;
   if (!raw) {
@@ -181,11 +152,7 @@ export async function suggestFoods(query: string): Promise<string[]> {
     return [];
   }
 
-  const data = await apiGet(
-    AUTOCOMPLETE_URL +
-      "?expression=" + encodeURIComponent(trimmed) +
-      "&format=json&max_results=6"
-  );
+  const data = await apiGet({ action: "autocomplete", query: trimmed });
 
   const raw = data?.suggestions?.suggestion;
   if (!raw) {
@@ -196,11 +163,7 @@ export async function suggestFoods(query: string): Promise<string[]> {
 }
 
 export async function getFood(id: string): Promise<Food> {
-  const data = await apiGet(
-    FOOD_URL +
-      "?food_id=" + encodeURIComponent(id) +
-      "&format=json&flag_default_serving=true"
-  );
+  const data = await apiGet({ action: "get", id });
 
   const raw = data?.food;
   if (!raw) {
@@ -213,9 +176,7 @@ export async function getFood(id: string): Promise<Food> {
 export async function findFoodByBarcode(barcode: string): Promise<Food | null> {
   const gtin13 = barcode.trim().padStart(13, "0");
 
-  const data = await apiGet(
-    BARCODE_URL + "?barcode=" + encodeURIComponent(gtin13) + "&format=json"
-  );
+  const data = await apiGet({ action: "barcode", barcode: gtin13 });
 
   if (data?.food) {
     return toFood(data.food);

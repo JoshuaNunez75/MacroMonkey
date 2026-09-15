@@ -6,6 +6,7 @@ import {
     initializeAuth
 }   from "firebase/auth";
 import { initializeFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB3OfHp0QMuHSSbD5TXXvQ5GZpS8g-ASO0",
@@ -25,3 +26,5 @@ export const auth = initializeAuth(app, {
 export const db = initializeFirestore(app, {
     ignoreUndefinedProperties: true,
 });
+
+export const functions = getFunctions(app, "us-central1");
