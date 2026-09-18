@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MacroMonkey — Privacy Policy</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0d0f12;
+    --card: #15181d;
+    --border: #252a32;
+    --text: #f2f4f7;
+    --muted: #9aa3b0;
+    --accent: #3ddc97;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 20px 96px;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+  .app {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-size: 31px;
+    line-height: 1.2;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .updated { color: var(--muted); font-size: 14px; margin: 0; }
+  h2 {
+    font-size: 19px;
+    margin: 40px 0 12px;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 15px;
+    margin: 24px 0 6px;
+    color: var(--text);
+  }
+  p { margin: 0 0 14px; color: #dfe4ea; }
+  ul { margin: 0 0 14px; padding-left: 20px; color: #dfe4ea; }
+  li { margin-bottom: 8px; }
+  strong { color: var(--text); }
+  a { color: var(--accent); }
+  .lead { font-size: 17px; color: var(--text); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin: 22px 0;
+  }
+  .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 14px;
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 36px 18px 72px; }
+    h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="app">MacroMonkey</p>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: September 18, 2026</p>
+</header>
+
+<p class="lead">MacroMonkey is a calorie and macronutrient tracking app built and operated by an
+independent developer. This policy explains exactly what the app collects, where it goes, and how
+to get rid of it.</p>
+
+<p>There are no advertisements in MacroMonkey, no third-party analytics or tracking SDKs, and
+your information is never sold, rented, or shared with data brokers or advertisers.</p>
+
+<h2>Information the app collects</h2>
+
+<h3>Account information</h3>
+<p>Creating an account requires an <strong>email address</strong> and a <strong>password</strong>.
+Accounts are handled by Google Firebase Authentication. Your password is stored by Firebase in
+hashed form and is never visible to the developer.</p>
+
+<h3>Information you enter</h3>
+<ul>
+  <li><strong>Your goals and body details</strong> — calorie target, macronutrient split, and, if
+      you use the built-in calculator, your age, sex, height, weight, activity level, and weekly
+      weight-change goal.</li>
+  <li><strong>Your food log</strong> — the foods you record, the serving and quantity, which meal
+      you assigned them to, the time, and the date they count toward.</li>
+</ul>
+
+<h3>Technical information</h3>
+<p>Google's infrastructure records standard operational data such as IP addresses, timestamps, and
+basic device information, in order to run the service and protect it from abuse. The app itself
+does not collect device identifiers or build any advertising profile.</p>
+
+<h2>What the app does not collect</h2>
+<ul>
+  <li>No location data.</li>
+  <li>No contacts, photos, or files.</li>
+  <li>No advertising identifiers, and no behavioural tracking across other apps or websites.</li>
+  <li>No payment information — MacroMonkey does not charge for anything.</li>
+</ul>
+
+<h2>Camera and barcode scanning</h2>
+<div class="card">
+  <p>MacroMonkey asks for camera permission for one purpose: <strong>scanning barcodes on food
+  packaging</strong>.</p>
+  <p>The camera feed is processed on your device to read the barcode. <strong>No photo or video is
+  ever saved, uploaded, or transmitted.</strong> The only thing that leaves your phone is the
+  decoded barcode number, which is used to look up the product's nutrition information.</p>
+</div>
+
+<h2>Who else receives information</h2>
+
+<h3>Google Firebase</h3>
+<p>MacroMonkey uses Firebase Authentication, Cloud Firestore, and Cloud Functions to run accounts,
+store your data, and handle food lookups. Your account and log data are stored on Google's servers
+as part of providing the app. Google acts as the infrastructure provider and does not use this data
+for its own advertising purposes.</p>
+
+<h3>FatSecret</h3>
+<p>Nutrition information comes from the FatSecret Platform API. When you search for a food or scan
+a barcode, the search text or barcode number is sent to FatSecret through the app's own server.</p>
+<p><strong>FatSecret does not receive your identity.</strong> Your email address, your account, your
+goals, and your food log are never sent to them — only the words you searched for.</p>
+
+<h3>Nobody else</h3>
+<p>Information is disclosed to no other parties, except where required by law.</p>
+
+<h2>Developer access</h2>
+<p>As the operator of the service, the developer has administrative access to the database and could
+technically view stored account and log data. This access is used only for maintaining and
+troubleshooting the app, and passwords are not accessible to anyone, including the developer.</p>
+
+<h2>Keeping and deleting your data</h2>
+<div class="card">
+  <p>Your information is kept for as long as your account exists.</p>
+  <p><strong>You can delete your account at any time from inside the app:</strong> open Settings,
+  tap "Delete account", and confirm with your password. This permanently removes your account, your
+  goals, and every food entry you have logged. It cannot be undone.</p>
+  <p>You can also email <a href="mailto:macromonkey75@gmail.com">macromonkey75@gmail.com</a> to
+  request deletion, or to ask what information is held about you.</p>
+</div>
+
+<h2>Security</h2>
+<p>Connections between the app and its servers are encrypted in transit. Database access rules are
+enforced on the server so that a signed-in user can read and write only their own data. No system
+is perfectly secure, and no guarantee of absolute security can be made.</p>
+
+<h2>Children</h2>
+<p>MacroMonkey is not directed at children under 13, and information is not knowingly collected from
+them. If you believe a child has created an account, email the address below and it will be deleted.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy changes, the updated version will be posted at this address with a new "last
+updated" date. Material changes affecting how your information is handled will be communicated
+in the app.</p>
+
+<h2>Contact</h2>
+<p>Questions about privacy, or requests about your data:
+<a href="mailto:macromonkey75@gmail.com">macromonkey75@gmail.com</a></p>
+
+<footer>
+  <p>Nutrition data powered by the fatsecret Platform API.</p>
+</footer>
+
+</div>
+</body>
+</html>
