@@ -14,10 +14,20 @@ import { auth, db } from "./firebase";
 import { Serving } from "./foodApi";
 import { MICRO_FIELDS } from "./nutrients";
 
+export type MealKey = "breakfast" | "lunch" | "dinner" | "snack";
+
+export const MEALS: { key: MealKey; label: string }[] = [
+    { key: "breakfast", label: "Breakfast" },
+    { key: "lunch", label: "Lunch" },
+    { key: "dinner", label: "Dinner" },
+    { key: "snack", label: "Snack" },
+];
+
 export type LoggedEntry = {
     id: string;
     date: string; // "YYYY-MM-DD"
     loggedAt: string; // ISO timestamp
+    meal?: MealKey;
     foodId: string;
     name: string;
     brand?: string;
@@ -118,12 +128,11 @@ export async function getEntries(date: string): Promise<LoggedEntry[]> {
 }
 
 export async function addEntry(
-    entry: Omit<LoggedEntry, "id" | "loggedAt">
+    entry: Omit<LoggedEntry, "id">
 ): Promise<LoggedEntry> {
-    const loggedAt = new Date().toISOString();
-    const reference = await addDoc(entriesCollection(), { ...entry, loggedAt });
+    const reference = await addDoc(entriesCollection(), entry);
 
-    return { ...entry, id: reference.id, loggedAt };
+    return { ...entry, id: reference.id };
 }
 
 export async function deleteEntry(date: string, id: string): Promise<void> {
@@ -158,7 +167,7 @@ export async function getEntry(
 export async function updateEntry(
     date: string,
     id: string,
-    changes: { serving: Serving; amount: number }
+    changes: { serving: Serving; amount: number; meal: MealKey; loggedAt: string; }
 ): Promise<void> {
     await updateDoc(entryDoc(id), changes);
 }
@@ -233,4 +242,43 @@ export async function deleteAllEntries(): Promise<void> {
         items.slice(i, i + 400).forEach((item) => batch.delete(item.ref));
         await batch.commit();
     }
+}
+
+export function mealForDate(date: Date): MealKey {
+    const minutes = date.getHours() * 60 + date.getMinutes();
+    if (minutes < 10 * 60 + 30) {
+        return "breakfast";
+    }
+    if (minutes < 15 * 60) {
+        return "lunch";
+    }
+    if (minutes < 21 * 60) {
+        return "dinner";
+    }
+    return "snack";
+}
+
+export function mealOf(entry: LoggedEntry): MealKey {
+    return entry.meal ?? "snack";
+}
+
+export function defaultLoggedAtFor(key: string): string {
+    const now = new Date();
+    const date = dateFromKey(key);
+    date.setHours(now.getHours(), now.getMinutes(), 0, 0);
+    return date.toISOString();
+}
+
+export function timeLabelFor(iso: string): string {
+    return new Date(iso).toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+    });
+}
+
+export function groupByMeal(entries: LoggedEntry[]) {
+    return MEALS.map((meal) => ({
+        ...meal,
+        entries: entries.filter((entry) => mealOf(entry) === meal.key),
+    })).filter((group) => group.entries.length > 0);
 }

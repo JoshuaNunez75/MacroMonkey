@@ -16,7 +16,23 @@ import { colors } from "../../lib/colors";
 import { Food, getFood, Serving } from "../../lib/foodApi";
 import { formatGrams } from "../../lib/format";
 import { MICRO_FIELDS } from "../../lib/nutrients";
-import { addEntry, getEntry, todayKey, updateEntry } from "../../lib/diary";
+import DateTimePicker, {
+    DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { Platform } from "react-native";
+import {
+    addEntry,
+    dateFromKey,
+    defaultLoggedAtFor,
+    getEntry,
+    MEALS,
+    MealKey,
+    mealForDate,
+    mealOf,
+    timeLabelFor,
+    todayKey,
+    updateEntry,
+} from "../../lib/diary";
 import {
     DEFAULT_PROFILE,
     loadProfile,
@@ -113,6 +129,9 @@ export default function FoodDetail() {
     const [error, setError] = useState<string | null>(null);
     const [servingId, setServingId] = useState<string | null>(null);
     const [amount, setAmount] = useState("1");
+    const [meal, setMeal] = useState<MealKey>(() => mealForDate(new Date()));
+    const [loggedAt, setLoggedAt] = useState(() => defaultLoggedAtFor(dateKey));
+    const [timeOpen, setTimeOpen] = useState(false);
     const [showMicros, setShowMicros] = useState(false);
     const [logState, setLogState] = useState<"idle" | "saving">("idle");
     const [logError, setLogError] = useState<string | null>(null);
@@ -139,6 +158,8 @@ export default function FoodDetail() {
                     if (!cancelled && existing) {
                         setServingId(existing.serving.id);
                         setAmount(String(existing.amount));
+                        setMeal(mealOf(existing));
+                        setLoggedAt(existing.loggedAt);
                     }
                 }
             } catch (e) {
@@ -154,6 +175,17 @@ export default function FoodDetail() {
             cancelled = true;
         };
     }, [id, entryId, dateKey]);
+
+    function onTimeChange(event: DateTimePickerEvent, selected?: Date) {
+        if (Platform.OS !== "ios") {
+            setTimeOpen(false);
+        }
+        if (selected) {
+            const base = dateFromKey(dateKey);
+            base.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
+            setLoggedAt(base.toISOString());
+        }
+    }
 
     function renderBody() {
         if (error) {
@@ -191,10 +223,14 @@ export default function FoodDetail() {
                     await updateEntry(dateKey, entryId, {
                         serving,
                         amount: multiplier,
+                        meal,
+                        loggedAt,
                     });
                 } else {
                     await addEntry({
                         date: dateKey,
+                        loggedAt,
+                        meal,
                         foodId: food.id,
                         name: food.name,
                         brand: food.brand,
@@ -231,6 +267,59 @@ export default function FoodDetail() {
             >
                 <Text style={styles.name}>{food.name}</Text>
                 {food.brand ? <Text style={styles.brand}>{food.brand}</Text> : null}
+
+                <Text style={styles.label}>Meal</Text>
+                <View style={styles.chipRow}>
+                    {MEALS.map((option) => {
+                        const selected = option.key === meal;
+                        return (
+                            <Pressable
+                                key={option.key}
+                                onPress={() => setMeal(option.key)}
+                                style={[styles.chip, selected && styles.chipSelected]}
+                            >
+                                <Text
+                                    style={[styles.chipText, selected && styles.chipTextSelected]}
+                                >
+                                    {option.label}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+
+                <Text style={styles.label}>Time</Text>
+                <View style={styles.timeRow}>
+                    {Platform.OS === "ios" ? (
+                        <DateTimePicker
+                            value={new Date(loggedAt)}
+                            mode="time"
+                            display="compact"
+                            onChange={onTimeChange}
+                            themeVariant="dark"
+                            accentColor={colors.calories}
+                        />
+                    ) : (
+                        <>
+                            <Pressable
+                                style={styles.timeButton}
+                                onPress={() => setTimeOpen(true)}
+                            >
+                                <Text style={styles.timeButtonText}>
+                                    {timeLabelFor(loggedAt)}
+                                </Text>
+                            </Pressable>
+                            {timeOpen ? (
+                                <DateTimePicker
+                                    value={new Date(loggedAt)}
+                                    mode="time"
+                                    display="default"
+                                    onChange={onTimeChange}
+                                />
+                            ) : null}
+                        </>
+                    )}
+                </View>
 
                 <Text style={styles.label}>Serving</Text>
                 <View style={styles.chipRow}>
@@ -336,8 +425,6 @@ export default function FoodDetail() {
                 </Pressable>
 
                 {logError ? <Text style={styles.error}>{logError}</Text> : null}
-
-                <FatSecretAttribution />
             </ScrollView >
         );
     }
@@ -352,7 +439,8 @@ export default function FoodDetail() {
                 </Pressable>
             </View>
 
-            {renderBody()}
+            <View style={styles.body}>{renderBody()}</View>
+            <FatSecretAttribution />
         </SafeAreaView>
     );
 }
@@ -373,8 +461,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: colors.calories,
     },
+    body: {
+        flex: 1,
+    },
     content: {
-        paddingBottom: 48,
+        paddingBottom: 24,
     },
     name: {
         fontSize: 26,
@@ -421,6 +512,22 @@ const styles = StyleSheet.create({
     chipTextSelected: {
         color: colors.bg,
         fontWeight: "600",
+    },
+    timeRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    timeButton: {
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    timeButtonText: {
+        fontSize: 16,
+        color: colors.text,
     },
     amountRow: {
         flexDirection: "row",
