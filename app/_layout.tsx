@@ -36,7 +36,7 @@ export default function RootLayout() {
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
-        fullScreenGestureEnabled: true,
+        fullScreenGestureEnabled: false,
       }}
     />
   );
