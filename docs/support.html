@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MacroMonkey — Support</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0d0f12;
+    --card: #15181d;
+    --border: #252a32;
+    --text: #f2f4f7;
+    --muted: #9aa3b0;
+    --accent: #3ddc97;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 56px 20px 96px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 28px; margin-bottom: 36px; }
+  .app {
+    font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin: 0 0 10px;
+  }
+  h1 { font-size: 31px; line-height: 1.2; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; margin: 36px 0 10px; letter-spacing: -0.01em; }
+  h3 { font-size: 15px; margin: 22px 0 4px; }
+  p { margin: 0 0 14px; color: #dfe4ea; }
+  ul { margin: 0 0 14px; padding-left: 20px; color: #dfe4ea; }
+  li { margin-bottom: 8px; }
+  a { color: var(--accent); }
+  .lead { font-size: 17px; color: var(--text); }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 22px; margin: 22px 0;
+  }
+  .card p:last-child { margin-bottom: 0; }
+  footer {
+    margin-top: 52px; padding-top: 24px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 14px;
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 36px 18px 72px; }
+    h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="app">MacroMonkey</p>
+  <h1>Support</h1>
+</header>
+
+<p class="lead">Something not working, or a suggestion? Email
+<a href="mailto:macromonkey75@gmail.com">macromonkey75@gmail.com</a> and you'll
+get a reply from an actual person.</p>
+
+<div class="card">
+  <p>If you're reporting a problem, it helps enormously to include what you were
+  doing when it happened, what you expected, and what happened instead. A
+  screenshot is even better.</p>
+</div>
+
+<h2>Common questions</h2>
+
+<h3>A food I searched for isn't there, or the numbers look wrong.</h3>
+<p>Nutrition data comes from the FatSecret food database, which includes
+entries submitted by its own community. MacroMonkey displays what the database
+reports and doesn't edit it. If an entry looks wrong, try a different result for
+the same food — there are often several.</p>
+
+<h3>The barcode scanner isn't finding a product.</h3>
+<p>Not every package is in the database, and regional products are especially
+patchy. Searching by name usually works when a scan doesn't.</p>
+
+<h3>My food disappeared, or the day looks empty.</h3>
+<p>Check your connection. MacroMonkey needs a network connection to load your
+log, and a poor connection can make a day appear empty when it isn't. Your data
+is not lost. Wait for the connection to return and reopen the app before
+re-logging anything, so you don't end up with duplicates.</p>
+
+<h3>The calorie calculator gave me a number that seems off.</h3>
+<p>It's an estimate from the Mifflin-St Jeor formula, which uses your age, sex,
+height, weight and activity level. Real energy needs vary quite a lot between
+people. Treat it as a starting point and adjust based on what actually happens
+over a few weeks.</p>
+
+<h3>I want to change my goals.</h3>
+<p>Open Settings from the gear icon on the main screen. You can enter a calorie
+target directly or use the calculator, and set your macro split by percentage or
+by grams.</p>
+
+<h3>How do I delete my account?</h3>
+<p>Settings, then "Delete account" at the bottom. You'll confirm with your
+password. This permanently removes your account, your goals, and every entry
+you've logged. It can't be undone.</p>
+
+<h2>A note on health</h2>
+<p>MacroMonkey is a tracking tool for general wellness, not medical advice. If
+you have a health condition, are pregnant, or are making significant dietary
+changes, talk to a doctor or a registered dietitian rather than relying on an
+app's estimates.</p>
+
+<h2>Privacy</h2>
+<p>What the app collects and how to remove it is set out in the
+<a href="privacy.html">privacy policy</a>.</p>
+
+<footer>
+  <p>Powered by fatsecret Platform API.</p>
+</footer>
+
+</div>
+</body>
+</html>
