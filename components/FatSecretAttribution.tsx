@@ -14,6 +14,6 @@ export function FatSecretAttribution() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignSelf: "center", paddingVertical: 10 },
+  wrap: { alignSelf: "center", paddingTop: 10, paddingBottom: 2 },
   text: { fontSize: 12, color: colors.muted },
 });

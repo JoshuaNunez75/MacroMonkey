@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
+    Keyboard,
     Pressable,
     StyleSheet,
     Text,
@@ -104,6 +105,29 @@ export default function Search() {
         setQuery("");
     }
 
+    function renderSuggestions() {
+        if (visibleSuggestions.length === 0) {
+            return null;
+        }
+
+        return (
+            <View style={styles.suggestions}>
+                {visibleSuggestions.map((suggestion) => (
+                    <Pressable
+                        key={suggestion}
+                        style={styles.chip}
+                        onPress={() => {
+                            setQuery(suggestion);
+                            Keyboard.dismiss();
+                        }}
+                    >
+                        <Text style={styles.chipText}>{suggestion}</Text>
+                    </Pressable>
+                ))}
+            </View>
+        );
+    }
+
     function renderBody() {
         if (error) {
             return <Text style={styles.error}>{error}</Text>;
@@ -115,9 +139,6 @@ export default function Search() {
                 <Text style={styles.hint}>Search for a food to get started</Text>
             );
         }
-        if (results.length === 0) {
-            return <Text style={styles.hint}>No results found</Text>;
-        }
         return (
             <FlatList
                 data={results}
@@ -128,7 +149,10 @@ export default function Search() {
                     }
                     />
                 )}
+                ListHeaderComponent={renderSuggestions()}
+                ListEmptyComponent={<Text style={styles.hint}>No results found</Text>}
                 keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
                 contentContainerStyle={styles.listContent}
             />
         );
@@ -170,21 +194,8 @@ export default function Search() {
                 ) : null}
             </View>
 
-            {visibleSuggestions.length > 0 ? (
-                <View style={styles.suggestions}>
-                    {visibleSuggestions.map((suggestion) => (
-                        <Pressable
-                            key={suggestion}
-                            style={styles.chip}
-                            onPress={() => setQuery(suggestion)}
-                        >
-                            <Text style={styles.chipText}>{suggestion}</Text>
-                        </Pressable>
-                    ))}
-                </View>
-            ) : null}
 
-            {renderBody()}
+            <View style={styles.body}>{renderBody()}</View>
             <FatSecretAttribution />
         </SafeAreaView>
     );
@@ -242,7 +253,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 8,
-        marginTop: 12,
+        marginBottom: 12,
     },
     chip: {
         backgroundColor: colors.card,
@@ -255,6 +266,9 @@ const styles = StyleSheet.create({
     chipText: {
         color: colors.muted,
         fontSize: 13,
+    },
+    body: {
+        flex: 1,
     },
     spinner: {
         marginTop: 32,
@@ -273,7 +287,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingTop: 16,
-        paddingBottom: 40,
+        paddingBottom: 16,
     },
     row: {
         backgroundColor: colors.card,
