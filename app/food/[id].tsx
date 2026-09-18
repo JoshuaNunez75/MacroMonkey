@@ -357,7 +357,10 @@ export default function FoodDetail() {
                     </Text>
                 </View>
 
-                <View style={styles.card}>
+                <Pressable
+                    style={styles.card}
+                    onPress={() => setShowMicros(!showMicros)}
+                >
                     <Text style={styles.calories}>{Math.round(totals.calories)}</Text>
                     <Text style={styles.caloriesLabel}>calories</Text>
                     <Text style={styles.percent}>
@@ -384,13 +387,10 @@ export default function FoodDetail() {
                             color={colors.fat}
                         />
                     </View>
-                </View>
-                <Pressable
-                    style={styles.microsHeader}
-                    onPress={() => setShowMicros(!showMicros)}
-                >
-                    <Text style={styles.microsTitle}>Nutrition details</Text>
-                    <Text style={styles.microsToggle}>{showMicros ? "Hide" : "Show"}</Text>
+
+                    <Text style={styles.cardHint}>
+                        {showMicros ? "Tap to hide details" : "Tap for nutrition details"}
+                    </Text>
                 </Pressable>
 
                 {showMicros ? (
@@ -601,6 +601,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: colors.muted,
         marginTop: 1,
+    },
+    cardHint: {
+        fontSize: 12,
+        color: colors.muted,
+        marginTop: 18,
     },
     logButton: {
         backgroundColor: colors.calories,

@@ -18,6 +18,8 @@ import {
   daysWithEntries,
   deleteEntry,
   getEntries,
+  groupByMeal,
+  timeLabelFor,
   weekDaysFor,
   weekdayLetterFor,
   LoggedEntry,
@@ -389,61 +391,84 @@ export default function Index() {
             </Text>
           </View>
         ) : (
-          <View style={styles.entryList}>
-            {entries.map((entry) => (
-              <Pressable
-                key={entry.id}
-                style={styles.entry}
-                onPress={() =>
-                  router.push(
-                    `/food/${entry.foodId}?entryId=${entry.id}&date=${dateKey}`
-                  )
-                }
-              >
-                <View style={styles.entryMain}>
-                  <View style={styles.entryTop}>
-                    <Text style={styles.entryName} numberOfLines={1}>
-                      {entry.name}
-                    </Text>
-                    <Text style={styles.entryCalories}>
-                      {calorieText(entry.serving.calories * entry.amount)}
-                    </Text>
-                  </View>
+          groupByMeal(entries).map((group) => (
+            <View key={group.key} style={styles.mealGroup}>
+              <View style={styles.mealGroupHeader}>
+                <Text style={styles.mealGroupTitle}>{group.label}</Text>
+                <Text style={styles.mealGroupCalories}>
+                  {Math.round(
+                    totalsFor(group.entries).calories
+                  ).toLocaleString()}{" "}
+                  cal
+                </Text>
+              </View>
 
-                  <Text style={styles.entryServing} numberOfLines={1}>
-                    {formatGrams(entry.amount)} × {entry.serving.description}
-                  </Text>
+              <View style={styles.entryList}>
+                {group.entries.map((entry) => (
+                  <Pressable
+                    key={entry.id}
+                    style={styles.entry}
+                    onPress={() =>
+                      router.push(
+                        `/food/${entry.foodId}?entryId=${entry.id}&date=${dateKey}`
+                      )
+                    }
+                  >
+                    <View style={styles.entryMain}>
+                      <View style={styles.entryTop}>
+                        <Text style={styles.entryName} numberOfLines={1}>
+                          {entry.name}
+                        </Text>
+                        <Text style={styles.entryCalories}>
+                          {calorieText(entry.serving.calories * entry.amount)}
+                        </Text>
+                      </View>
 
-                  <View style={styles.entryMacros}>
-                    <Text style={[styles.entryMacro, { color: colors.protein }]}>
-                      {macroText(
-                        "P",
-                        entry.serving.protein * entry.amount,
-                        targets.protein
-                      )}
-                    </Text>
-                    <Text style={[styles.entryMacro, { color: colors.carbs }]}>
-                      {macroText(
-                        "C",
-                        entry.serving.carbs * entry.amount,
-                        targets.carbs
-                      )}
-                    </Text>
-                    <Text style={[styles.entryMacro, { color: colors.fat }]}>
-                      {macroText("F", entry.serving.fat * entry.amount, targets.fat)}
-                    </Text>
-                  </View>
-                </View>
-                <Pressable
-                  onPress={() => remove(entry.id)}
-                  hitSlop={10}
-                  style={styles.entryDelete}
-                >
-                  <Text style={styles.entryDeleteText}>✕</Text>
-                </Pressable>
-              </Pressable>
-            ))}
-          </View>
+                      <Text style={styles.entryServing} numberOfLines={1}>
+                        {timeLabelFor(entry.loggedAt)} ·{" "}
+                        {formatGrams(entry.amount)} × {entry.serving.description}
+                      </Text>
+
+                      <View style={styles.entryMacros}>
+                        <Text
+                          style={[styles.entryMacro, { color: colors.protein }]}
+                        >
+                          {macroText(
+                            "P",
+                            entry.serving.protein * entry.amount,
+                            targets.protein
+                          )}
+                        </Text>
+                        <Text
+                          style={[styles.entryMacro, { color: colors.carbs }]}
+                        >
+                          {macroText(
+                            "C",
+                            entry.serving.carbs * entry.amount,
+                            targets.carbs
+                          )}
+                        </Text>
+                        <Text style={[styles.entryMacro, { color: colors.fat }]}>
+                          {macroText(
+                            "F",
+                            entry.serving.fat * entry.amount,
+                            targets.fat
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                    <Pressable
+                      onPress={() => remove(entry.id)}
+                      hitSlop={10}
+                      style={styles.entryDelete}
+                    >
+                      <Text style={styles.entryDeleteText}>✕</Text>
+                    </Pressable>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ))
         )}
 
       </ScrollView>
@@ -768,6 +793,25 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: 4,
     textAlign: "center",
+  },
+  mealGroup: {
+    marginBottom: 22,
+  },
+  mealGroupHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  mealGroupTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  mealGroupCalories: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.muted,
   },
   entryList: {
     gap: 10,
