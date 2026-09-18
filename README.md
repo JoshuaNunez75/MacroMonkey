@@ -6,10 +6,10 @@ your portion, and track daily intake against personalized goals.
 Built with React Native, Expo, TypeScript, and Firebase.
 
 <p align="center">
-  <img src="docs/screenshots/today.png" width="200" />
-  <img src="docs/screenshots/search.png" width="200" />
-  <img src="docs/screenshots/logging.png" width="200" />
-  <img src="docs/screenshots/breakdown.png" width="200" />
+  <img src="docs/screenshots/1-today.png" width="190" />
+  <img src="docs/screenshots/2-meals.png" width="190" />
+  <img src="docs/screenshots/4-detail.png" width="190" />
+  <img src="docs/screenshots/6-goals.png" width="190" />
 </p>
 
 ## Features
