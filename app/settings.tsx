@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +11,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { signOutUser } from "../lib/auth";
+import { deleteAccount } from "../lib/account";
+import { messageForAuthError, signOutUser } from "../lib/auth";
 import { colors } from "../lib/colors";
 import {
   ACTIVITY_LEVELS,
@@ -87,6 +89,10 @@ export default function Settings() {
     fat: { pct: "30", g: "0" },
   });
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [body, setBody] = useState<BodyForm>({
     sex: DEFAULT_PROFILE.sex,
@@ -226,6 +232,35 @@ export default function Settings() {
     });
     setSaving(false);
     router.back();
+  }
+
+  function openDeleteConfirm() {
+    setDeletePassword("");
+    setDeleteError("");
+    setConfirmingDelete(true);
+  }
+
+  async function confirmDelete() {
+    setDeleteBusy(true);
+    setDeleteError("");
+
+    try {
+      await deleteAccount(deletePassword);
+      // Deliberately no state update here. On success the auth listener in
+      // app/_layout.tsx swaps to the sign-in screen and unmounts this screen.
+    } catch (error) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? String((error as { code: unknown }).code)
+          : "";
+
+      setDeleteError(
+        code === "auth/invalid-credential" || code === "auth/wrong-password"
+          ? "That password is incorrect."
+          : messageForAuthError(error)
+      );
+      setDeleteBusy(false);
+    }
   }
 
   return (
@@ -452,7 +487,69 @@ export default function Settings() {
         <Pressable style={styles.signOut} onPress={signOutUser}>
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
+
+        <Pressable style={styles.deleteLink} onPress={openDeleteConfirm}>
+          <Text style={styles.deleteLinkText}>Delete account</Text>
+        </Pressable>
       </ScrollView>
+
+      <Modal
+        visible={confirmingDelete}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setConfirmingDelete(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Delete account</Text>
+            <Text style={styles.modalBody}>
+              This permanently deletes your account, every meal you have
+              logged, and your goals. It cannot be undone.
+            </Text>
+            <Text style={styles.modalBody}>
+              Enter your password to confirm.
+            </Text>
+
+            <TextInput
+              style={styles.modalInput}
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              placeholder="Password"
+              placeholderTextColor={colors.muted}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!deleteBusy}
+            />
+
+            {deleteError ? (
+              <Text style={styles.modalError}>{deleteError}</Text>
+            ) : null}
+
+            <Pressable
+              style={[
+                styles.modalDelete,
+                (deleteBusy || deletePassword === "") &&
+                  styles.modalDeleteDisabled,
+              ]}
+              onPress={confirmDelete}
+              disabled={deleteBusy || deletePassword === ""}
+            >
+              <Text style={styles.modalDeleteText}>
+                {deleteBusy ? "Deleting…" : "Delete my account"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.modalCancel}
+              onPress={() => setConfirmingDelete(false)}
+              disabled={deleteBusy}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -670,5 +767,80 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: colors.protein,
+  },
+  deleteLink: {
+    alignSelf: "center",
+    marginTop: 2,
+    paddingVertical: 10,
+  },
+  deleteLinkText: {
+    fontSize: 13,
+    color: colors.muted,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.72)",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    backgroundColor: colors.card,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 22,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 10,
+  },
+  modalBody: {
+    fontSize: 14,
+    color: colors.muted,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  modalInput: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 4,
+  },
+  modalError: {
+    fontSize: 13,
+    color: colors.protein,
+    marginTop: 10,
+  },
+  modalDelete: {
+    backgroundColor: colors.protein,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 18,
+  },
+  modalDeleteDisabled: {
+    opacity: 0.4,
+  },
+  modalDeleteText: {
+    color: colors.bg,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  modalCancel: {
+    alignItems: "center",
+    paddingVertical: 12,
+    marginTop: 2,
+  },
+  modalCancelText: {
+    fontSize: 15,
+    color: colors.muted,
+    fontWeight: "600",
   },
 });

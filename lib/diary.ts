@@ -8,6 +8,7 @@ import {
     query,
     updateDoc,
     where,
+    writeBatch,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { Serving } from "./foodApi";
@@ -221,4 +222,15 @@ export async function daysWithEntries(keys: string[]): Promise<string[]> {
     snapshot.forEach((item) => found.add(item.data().date as string));
 
     return keys.filter((key) => found.has(key));
+}
+
+export async function deleteAllEntries(): Promise<void> {
+    const snapshot = await getDocs(entriesCollection());
+    const items = snapshot.docs;
+
+    for (let i = 0; i < items.length; i += 400) {
+        const batch = writeBatch(db);
+        items.slice(i, i + 400).forEach((item) => batch.delete(item.ref));
+        await batch.commit();
+    }
 }

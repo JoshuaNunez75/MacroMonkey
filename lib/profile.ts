@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 function profileDoc() {
@@ -117,4 +117,11 @@ export function suggestedCalories(profile: Profile): number {
     const raw = maintenanceFor(profile) - dailyAdjustment;
     const rounded = Math.round(raw / GOAL_ROUNDING) * GOAL_ROUNDING;
     return Math.max(MINIMUM_CALORIES, rounded);
+}
+
+export async function deleteProfile(): Promise<void> {
+    if (!auth.currentUser) {
+        return;
+    }
+    await deleteDoc(profileDoc());
 }
