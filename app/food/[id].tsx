@@ -268,28 +268,9 @@ export default function FoodDetail() {
                 <Text style={styles.name}>{food.name}</Text>
                 {food.brand ? <Text style={styles.brand}>{food.brand}</Text> : null}
 
-                <Text style={styles.label}>Meal</Text>
-                <View style={styles.chipRow}>
-                    {MEALS.map((option) => {
-                        const selected = option.key === meal;
-                        return (
-                            <Pressable
-                                key={option.key}
-                                onPress={() => setMeal(option.key)}
-                                style={[styles.chip, selected && styles.chipSelected]}
-                            >
-                                <Text
-                                    style={[styles.chipText, selected && styles.chipTextSelected]}
-                                >
-                                    {option.label}
-                                </Text>
-                            </Pressable>
-                        );
-                    })}
-                </View>
+                <View style={styles.metaHeader}>
+                    <Text style={styles.labelFlush}>Meal</Text>
 
-                <Text style={styles.label}>Time</Text>
-                <View style={styles.timeRow}>
                     {Platform.OS === "ios" ? (
                         <DateTimePicker
                             value={new Date(loggedAt)}
@@ -321,6 +302,25 @@ export default function FoodDetail() {
                     )}
                 </View>
 
+                <View style={styles.chipRow}>
+                    {MEALS.map((option) => {
+                        const selected = option.key === meal;
+                        return (
+                            <Pressable
+                                key={option.key}
+                                onPress={() => setMeal(option.key)}
+                                style={[styles.chip, selected && styles.chipSelected]}
+                            >
+                                <Text
+                                    style={[styles.chipText, selected && styles.chipTextSelected]}
+                                >
+                                    {option.label}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+
                 <Text style={styles.label}>Serving</Text>
                 <View style={styles.chipRow}>
                     {options.map((option) => {
@@ -341,7 +341,6 @@ export default function FoodDetail() {
                     })}
                 </View>
 
-                <Text style={styles.label}>Amount</Text>
                 <View style={styles.amountRow}>
                     <TextInput
                         style={styles.amountInput}
@@ -468,7 +467,7 @@ const styles = StyleSheet.create({
         paddingBottom: 24,
     },
     name: {
-        fontSize: 26,
+        fontSize: 22,
         fontWeight: "700",
         color: colors.text,
         marginTop: 4,
@@ -484,8 +483,22 @@ const styles = StyleSheet.create({
         color: colors.muted,
         textTransform: "uppercase",
         letterSpacing: 0.5,
-        marginTop: 28,
+        marginTop: 20,
         marginBottom: 10,
+    },
+    metaHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: 20,
+        marginBottom: 10,
+    },
+    labelFlush: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: colors.muted,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
     },
     chipRow: {
         flexDirection: "row",
@@ -533,6 +546,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
+        marginTop: 16,
     },
     amountInput: {
         backgroundColor: colors.card,
@@ -556,12 +570,12 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         borderColor: colors.border,
-        padding: 24,
-        marginTop: 28,
+        padding: 20,
+        marginTop: 20,
         alignItems: "center",
     },
     calories: {
-        fontSize: 48,
+        fontSize: 40,
         fontWeight: "700",
         color: colors.calories,
     },
@@ -579,10 +593,10 @@ const styles = StyleSheet.create({
     macroRow: {
         flexDirection: "row",
         width: "100%",
-        marginTop: 22,
+        marginTop: 16,
         borderTopWidth: 1,
         borderTopColor: colors.border,
-        paddingTop: 18,
+        paddingTop: 14,
     },
     macro: {
         flex: 1,
@@ -605,14 +619,14 @@ const styles = StyleSheet.create({
     cardHint: {
         fontSize: 12,
         color: colors.muted,
-        marginTop: 18,
+        marginTop: 12,
     },
     logButton: {
         backgroundColor: colors.calories,
         borderRadius: 14,
         paddingVertical: 16,
         alignItems: "center",
-        marginTop: 32,
+        marginTop: 20,
     },
     logButtonDisabled: {
         opacity: 0.5,
