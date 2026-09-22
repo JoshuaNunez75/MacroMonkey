@@ -34,15 +34,15 @@
     },
     "plugins": [
       "expo-router",
-      [
+            [
         "expo-splash-screen",
         {
-          "image": "./assets/images/MacroMonkeyAppIcon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 220,
           "resizeMode": "contain",
           "backgroundColor": "#0F1115",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0F1115"
           }
         }
       ],
