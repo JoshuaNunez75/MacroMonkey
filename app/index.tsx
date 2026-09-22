@@ -449,7 +449,7 @@ export default function Index() {
                   >
                     <View style={styles.entryMain}>
                       <View style={styles.entryTop}>
-                        <Text style={styles.entryName} numberOfLines={1}>
+                        <Text style={styles.entryName} numberOfLines={2}>
                           {entry.name}
                         </Text>
                         <Text style={styles.entryCalories}>
@@ -853,6 +853,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: colors.pill,
     borderRadius: 10,
+    marginHorizontal: -8,
     paddingLeft: 14,
     paddingRight: 6,
     paddingVertical: 6,
@@ -903,7 +904,7 @@ const styles = StyleSheet.create({
   },
   entryTop: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 8,
   },
@@ -912,6 +913,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: colors.text,
+    lineHeight: 20,
   },
   entryMacros: {
     flexDirection: "row",
