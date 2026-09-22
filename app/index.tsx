@@ -61,7 +61,7 @@ function MacroRing({
         trackColor={colors.border}
       >
         <Text style={[styles.macroPercent, { color }]}>
-          {Math.round(progress * 100)}%
+          {Math.round(goal > 0 ? (shown / goal) * 100 : 0)}%
         </Text>
       </Ring>
 

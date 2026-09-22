@@ -5,6 +5,8 @@ import {
     doc,
     getDoc,
     getDocs,
+    limit,
+    orderBy,
     query,
     updateDoc,
     where,
@@ -281,4 +283,46 @@ export function groupByMeal(entries: LoggedEntry[]) {
         ...meal,
         entries: entries.filter((entry) => mealOf(entry) === meal.key),
     })).filter((group) => group.entries.length > 0);
+}
+
+export type RecentFood = {
+    foodId: string;
+    name: string;
+    brand?: string;
+    serving: Serving;
+    amount: number;
+    lastLoggedAt: string;
+};
+
+export async function recentFoods(max = 15): Promise<RecentFood[]> {
+    const snapshot = await getDocs(
+        query(entriesCollection(), orderBy("loggedAt", "desc"), limit(60))
+    );
+
+    const seen = new Set<string>();
+    const result: RecentFood[] = [];
+
+    for (const item of snapshot.docs) {
+        const entry = { id: item.id, ...item.data() } as LoggedEntry;
+
+        if (seen.has(entry.foodId)) {
+            continue;
+        }
+        seen.add(entry.foodId);
+
+        result.push({
+            foodId: entry.foodId,
+            name: entry.name,
+            brand: entry.brand,
+            serving: entry.serving,
+            amount: entry.amount,
+            lastLoggedAt: entry.loggedAt,
+        });
+
+        if (result.length >= max) {
+            break;
+        }
+    }
+
+    return result;
 }

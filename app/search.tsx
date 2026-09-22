@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FatSecretAttribution } from "../components/FatSecretAttribution";
 import { colors } from "../lib/colors";
+import { RecentFood, recentFoods } from "../lib/diary";
 import { Food, searchFoods, suggestFoods } from "../lib/foodApi";
 import { formatGrams } from "../lib/format";
 
@@ -48,6 +49,35 @@ function FoodRow({ food, onPress }: { food: Food; onPress: () => void }) {
     );
 }
 
+function RecentRow({ food, onPress }: { food: RecentFood; onPress: () => void }) {
+    return (
+        <Pressable style={styles.row} onPress={onPress}>
+            <Text style={styles.rowName} numberOfLines={1}>
+                {food.name}
+            </Text>
+            {food.brand ? <Text style={styles.rowBrand}>{food.brand}</Text> : null}
+            <Text style={styles.rowServing}>
+                {formatGrams(food.amount)} × {food.serving.description}
+            </Text>
+
+            <View style={styles.rowMacros}>
+                <Text style={[styles.macro, { color: colors.calories }]}>
+                    {Math.round(food.serving.calories * food.amount)} cal
+                </Text>
+                <Text style={[styles.macro, { color: colors.protein }]}>
+                    P {formatGrams(food.serving.protein * food.amount)}g
+                </Text>
+                <Text style={[styles.macro, { color: colors.carbs }]}>
+                    C {formatGrams(food.serving.carbs * food.amount)}g
+                </Text>
+                <Text style={[styles.macro, { color: colors.fat }]}>
+                    F {formatGrams(food.serving.fat * food.amount)}g
+                </Text>
+            </View>
+        </Pressable>
+    );
+}
+
 export default function Search() {
     const router = useRouter();
     const { date } = useLocalSearchParams<{ date?: string }>();
@@ -56,6 +86,27 @@ export default function Search() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [recent, setRecent] = useState<RecentFood[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        recentFoods()
+            .then((list) => {
+                if (!cancelled) {
+                    setRecent(list);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setRecent([]);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     useEffect(() => {
         const trimmed = query.trim();
@@ -133,10 +184,35 @@ export default function Search() {
             return <Text style={styles.error}>{error}</Text>;
         }
         if (results === null) {
-            return loading ? (
-                <ActivityIndicator color={colors.calories} style={styles.spinner} />
-            ) : (
-                <Text style={styles.hint}>Search for a food to get started</Text>
+            if (loading) {
+                return (
+                    <ActivityIndicator color={colors.calories} style={styles.spinner} />
+                );
+            }
+            if (recent.length === 0) {
+                return <Text style={styles.hint}>Search for a food to get started</Text>;
+            }
+            return (
+                <FlatList
+                    data={recent}
+                    keyExtractor={(item) => item.foodId}
+                    ListHeaderComponent={
+                        <Text style={styles.sectionLabel}>Recent</Text>
+                    }
+                    renderItem={({ item }) => (
+                        <RecentRow
+                            food={item}
+                            onPress={() =>
+                                router.push(
+                                    `/food/${item.foodId}${date ? `?date=${date}` : ""}`
+                                )
+                            }
+                        />
+                    )}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                    contentContainerStyle={styles.listContent}
+                />
             );
         }
         return (
@@ -269,6 +345,14 @@ const styles = StyleSheet.create({
     },
     body: {
         flex: 1,
+    },
+    sectionLabel: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: colors.muted,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+        marginBottom: 10,
     },
     spinner: {
         marginTop: 32,
