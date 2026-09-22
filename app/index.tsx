@@ -413,7 +413,7 @@ export default function Index() {
                     hitSlop={10}
                     style={styles.mealAdd}
                   >
-                    <Ionicons name="add" size={18} color={colors.calories} />
+                    <Ionicons name="add" size={17} color={colors.calories} />
                   </Pressable>
                 </View>
               </View>
@@ -810,21 +810,28 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   mealGroup: {
-    marginBottom: 22,
+    marginBottom: 26,
   },
   mealGroupHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
+    backgroundColor: colors.pill,
+    borderRadius: 10,
+    paddingLeft: 14,
+    paddingRight: 6,
+    paddingVertical: 6,
+    marginBottom: 8,
   },
   mealGroupTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "700",
     color: colors.text,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   mealGroupCalories: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
     color: colors.muted,
   },
@@ -834,10 +841,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   mealAdd: {
-    width: 28,
-    height: 28,
+    width: 26,
+    height: 26,
     borderRadius: 999,
-    backgroundColor: colors.pill,
+    borderWidth: 1,
+    borderColor: colors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
   },
