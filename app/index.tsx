@@ -375,11 +375,29 @@ export default function Index() {
         <View style={styles.mealsHeader}>
           <Text style={styles.sectionTitle}>Meals</Text>
           {entries.length > 0 ? (
-            <Pressable onPress={() => setShowPercent(!showPercent)} hitSlop={10}>
-              <Text style={styles.mealsToggle}>
-                {showPercent ? "Show grams" : "Show % of goal"}
-              </Text>
-            </Pressable>
+            <View style={styles.unitToggle}>
+              <Pressable
+                onPress={() => setShowPercent(false)}
+                style={[styles.unitOption, !showPercent && styles.unitOptionOn]}
+              >
+                <Text
+                  style={[styles.unitText, !showPercent && styles.unitTextOn]}
+                >
+                  g
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setShowPercent(true)}
+                style={[styles.unitOption, showPercent && styles.unitOptionOn]}
+              >
+                <Text
+                  style={[styles.unitText, showPercent && styles.unitTextOn]}
+                >
+                  %
+                </Text>
+              </Pressable>
+            </View>
           ) : null}
         </View>
 
@@ -785,10 +803,27 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.text,
   },
-  mealsToggle: {
+  unitToggle: {
+    flexDirection: "row",
+    backgroundColor: colors.pill,
+    borderRadius: 999,
+    padding: 3,
+  },
+  unitOption: {
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  unitOptionOn: {
+    backgroundColor: colors.calories,
+  },
+  unitText: {
     fontSize: 13,
-    fontWeight: "600",
-    color: colors.calories,
+    fontWeight: "700",
+    color: colors.muted,
+  },
+  unitTextOn: {
+    color: colors.bg,
   },
   emptyCard: {
     backgroundColor: colors.card,
