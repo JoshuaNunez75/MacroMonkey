@@ -80,7 +80,23 @@ function RecentRow({ food, onPress }: { food: RecentFood; onPress: () => void })
 
 export default function Search() {
     const router = useRouter();
-    const { date } = useLocalSearchParams<{ date?: string }>();
+    const { date, meal } = useLocalSearchParams<{
+        date?: string;
+        meal?: string;
+    }>();
+
+    function foodHref(foodId: string) {
+        const params: { id: string; date?: string; meal?: string } = {
+            id: foodId,
+        };
+        if (date) {
+            params.date = date;
+        }
+        if (meal) {
+            params.meal = meal;
+        }
+        return { pathname: "/food/[id]" as const, params };
+    }
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<Food[] | null>(null);
     const [loading, setLoading] = useState(false);
@@ -202,11 +218,7 @@ export default function Search() {
                     renderItem={({ item }) => (
                         <RecentRow
                             food={item}
-                            onPress={() =>
-                                router.push(
-                                    `/food/${item.foodId}${date ? `?date=${date}` : ""}`
-                                )
-                            }
+                            onPress={() => router.push(foodHref(item.foodId))}
                         />
                     )}
                     keyboardShouldPersistTaps="handled"
@@ -220,10 +232,7 @@ export default function Search() {
                 data={results}
                 keyExtractor={(food) => food.id}
                 renderItem={({ item }) => (
-                    <FoodRow food={item} onPress={() =>
-                        router.push(`/food/${item.id}${date ? `?date=${date}` : ""}`)
-                    }
-                    />
+                    <FoodRow food={item} onPress={() => router.push(foodHref(item.id))} />
                 )}
                 ListHeaderComponent={renderSuggestions()}
                 ListEmptyComponent={<Text style={styles.hint}>No results found</Text>}

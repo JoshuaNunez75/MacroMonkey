@@ -278,11 +278,13 @@ export function timeLabelFor(iso: string): string {
     });
 }
 
-export function groupByMeal(entries: LoggedEntry[]) {
-    return MEALS.map((meal) => ({
+export function groupByMeal(entries: LoggedEntry[], includeEmpty = false) {
+    const groups = MEALS.map((meal) => ({
         ...meal,
         entries: entries.filter((entry) => mealOf(entry) === meal.key),
-    })).filter((group) => group.entries.length > 0);
+    }));
+
+    return includeEmpty ? groups : groups.filter((group) => group.entries.length > 0);
 }
 
 export type RecentFood = {

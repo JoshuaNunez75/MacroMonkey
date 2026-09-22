@@ -118,10 +118,11 @@ function MacroStat({
 
 export default function FoodDetail() {
     const router = useRouter();
-    const { id, entryId, date } = useLocalSearchParams<{
+    const { id, entryId, date, meal: mealParam } = useLocalSearchParams<{
         id: string;
         entryId?: string;
         date?: string;
+        meal?: string;
     }>();
 
     const dateKey = date ?? todayKey();
@@ -129,7 +130,10 @@ export default function FoodDetail() {
     const [error, setError] = useState<string | null>(null);
     const [servingId, setServingId] = useState<string | null>(null);
     const [amount, setAmount] = useState("1");
-    const [meal, setMeal] = useState<MealKey>(() => mealForDate(new Date()));
+    const [meal, setMeal] = useState<MealKey>(() => {
+        const match = MEALS.find((option) => option.key === mealParam);
+        return match ? match.key : mealForDate(new Date());
+    });
     const [loggedAt, setLoggedAt] = useState(() => defaultLoggedAtFor(dateKey));
     const [timeOpen, setTimeOpen] = useState(false);
     const [showMicros, setShowMicros] = useState(false);

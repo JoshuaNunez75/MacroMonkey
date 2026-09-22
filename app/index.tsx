@@ -391,16 +391,31 @@ export default function Index() {
             </Text>
           </View>
         ) : (
-          groupByMeal(entries).map((group) => (
+          groupByMeal(entries, true).map((group) => (
             <View key={group.key} style={styles.mealGroup}>
               <View style={styles.mealGroupHeader}>
                 <Text style={styles.mealGroupTitle}>{group.label}</Text>
-                <Text style={styles.mealGroupCalories}>
-                  {Math.round(
-                    totalsFor(group.entries).calories
-                  ).toLocaleString()}{" "}
-                  cal
-                </Text>
+
+                <View style={styles.mealGroupRight}>
+                  {group.entries.length > 0 ? (
+                    <Text style={styles.mealGroupCalories}>
+                      {Math.round(
+                        totalsFor(group.entries).calories
+                      ).toLocaleString()}{" "}
+                      cal
+                    </Text>
+                  ) : null}
+
+                  <Pressable
+                    onPress={() =>
+                      router.push(`/search?date=${dateKey}&meal=${group.key}`)
+                    }
+                    hitSlop={10}
+                    style={styles.mealAdd}
+                  >
+                    <Ionicons name="add" size={18} color={colors.calories} />
+                  </Pressable>
+                </View>
               </View>
 
               <View style={styles.entryList}>
@@ -812,6 +827,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: colors.muted,
+  },
+  mealGroupRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  mealAdd: {
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: colors.pill,
+    alignItems: "center",
+    justifyContent: "center",
   },
   entryList: {
     gap: 10,
