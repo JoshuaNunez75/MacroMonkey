@@ -79,6 +79,36 @@ function MealBar({ fraction, color }: { fraction: number; color: string }) {
     );
 }
 
+function TargetBar({
+    actual,
+    target,
+    color,
+}: {
+    actual: number;
+    target: number;
+    color: string;
+}) {
+    const fill = Math.min(1, Math.max(0, actual / 100));
+    const mark = Math.min(1, Math.max(0, target / 100));
+
+    return (
+        <View style={styles.barWrap}>
+            <View style={styles.barTrack}>
+                <View style={{ flex: fill, backgroundColor: color, borderRadius: 999 }} />
+                <View style={{ flex: 1 - fill }} />
+            </View>
+
+            <View style={styles.markLayer} pointerEvents="none">
+                <View style={{ flex: mark }} />
+                <View style={styles.markHalo}>
+                    <View style={styles.markTick} />
+                </View>
+                <View style={{ flex: 1 - mark }} />
+            </View>
+        </View>
+    );
+}
+
 export default function DayDetail() {
     const router = useRouter();
     const { date } = useLocalSearchParams<{ date?: string }>();
@@ -157,6 +187,42 @@ export default function DayDetail() {
     ];
 
     const consumedCalories = totals.calories;
+
+    const macroCalories =
+        totals.protein * CALORIES_PER_GRAM.protein +
+        totals.carbs * CALORIES_PER_GRAM.carbs +
+        totals.fat * CALORIES_PER_GRAM.fat;
+
+    function splitShare(value: number) {
+        if (macroCalories <= 0) {
+            return 0;
+        }
+        return Math.round((value / macroCalories) * 100);
+    }
+
+    const splitRows = [
+        {
+            key: "protein",
+            label: "Protein",
+            color: colors.protein,
+            actual: splitShare(totals.protein * CALORIES_PER_GRAM.protein),
+            target: Math.round(profile.proteinPercent),
+        },
+        {
+            key: "carbs",
+            label: "Carbs",
+            color: colors.carbs,
+            actual: splitShare(totals.carbs * CALORIES_PER_GRAM.carbs),
+            target: Math.round(profile.carbsPercent),
+        },
+        {
+            key: "fat",
+            label: "Fat",
+            color: colors.fat,
+            actual: splitShare(totals.fat * CALORIES_PER_GRAM.fat),
+            target: Math.round(profile.fatPercent),
+        },
+    ];
 
     const macroRows = [
         {
@@ -243,11 +309,35 @@ export default function DayDetail() {
 
                 <Text style={styles.sectionTitle}>Macro Split</Text>
                 <Text style={styles.sectionNote}>
-                    Where each bar&apos;s calories came from — not progress toward goals
+                    The bar is the share of calories you ate. The line is your target.
                 </Text>
 
-                <SplitBar title="Today" parts={actualParts} />
-                <SplitBar title="Target" parts={targetParts} />
+                <View style={styles.splitCard}>
+                    {splitRows.map((row) => (
+                        <View key={row.key} style={styles.splitRow}>
+                            <View style={styles.splitTop}>
+                                <View
+                                    style={[styles.legendDot, { backgroundColor: row.color }]}
+                                />
+                                <Text style={styles.splitName}>{row.label}</Text>
+                                <Text style={styles.splitNums}>
+                                    {row.actual}% · target {row.target}%
+                                </Text>
+                            </View>
+
+                            <TargetBar
+                                actual={row.actual}
+                                target={row.target}
+                                color={row.color}
+                            />
+                        </View>
+                    ))}
+
+                    <View style={styles.splitKey}>
+                        <View style={styles.keyTick} />
+                        <Text style={styles.splitKeyText}>your target split</Text>
+                    </View>
+                </View>
 
                 <Text style={styles.sectionTitle}>Macros</Text>
                 <Text style={styles.sectionNote}>Progress toward today&apos;s targets</Text>
@@ -557,6 +647,131 @@ const styles = StyleSheet.create({
     mealMacroPercent: {
         fontSize: 12,
         fontWeight: "600",
+        color: colors.muted,
+    },
+    splitHead: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    splitDotSpacer: {
+        width: 9,
+    },
+    splitHeadLabel: {
+        flex: 1,
+        fontSize: 11,
+        fontWeight: "700",
+        letterSpacing: 0.6,
+        textTransform: "uppercase",
+        color: colors.muted,
+    },
+    splitHeadCell: {
+        width: 52,
+        textAlign: "right",
+        fontSize: 11,
+        fontWeight: "700",
+        letterSpacing: 0.6,
+        textTransform: "uppercase",
+        color: colors.muted,
+    },
+    splitLabel: {
+        flex: 1,
+        fontSize: 14,
+        color: colors.text,
+    },
+    splitCell: {
+        width: 52,
+        textAlign: "right",
+        fontSize: 14,
+        fontWeight: "600",
+        color: colors.text,
+        fontVariant: ["tabular-nums"],
+    },
+    splitDiff: {
+        width: 52,
+        textAlign: "right",
+        fontSize: 14,
+        fontWeight: "600",
+        color: colors.muted,
+        fontVariant: ["tabular-nums"],
+    },
+    splitCard: {
+        backgroundColor: colors.card,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: 16,
+        marginTop: 12,
+    },
+    splitRow: {
+        marginBottom: 18,
+    },
+    splitTop: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 9,
+    },
+    splitName: {
+        flex: 1,
+        fontSize: 14,
+        color: colors.text,
+    },
+    splitNums: {
+        fontSize: 13,
+        color: colors.muted,
+        fontVariant: ["tabular-nums"],
+    },
+    barWrap: {
+        height: 28,
+        justifyContent: "center",
+        marginTop: 4,
+    },
+    barTrack: {
+        flexDirection: "row",
+        height: 12,
+        borderRadius: 999,
+        backgroundColor: colors.border,
+        overflow: "hidden",
+    },
+    markLayer: {
+        ...StyleSheet.absoluteFillObject,
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    markHalo: {
+        width: 7,
+        height: 26,
+        borderRadius: 3,
+        backgroundColor: colors.card,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    markTick: {
+        width: 3,
+        height: 22,
+        borderRadius: 2,
+        backgroundColor: colors.text,
+    },
+    keyTick: {
+        width: 3,
+        height: 16,
+        borderRadius: 2,
+        backgroundColor: colors.text,
+    },
+    splitKey: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 9,
+        marginTop: 4,
+        paddingTop: 14,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+    },
+    splitKeyText: {
+        fontSize: 12,
         color: colors.muted,
     },
     table: {
