@@ -6,6 +6,7 @@ import {
 import { deleteAllEntries } from "./diary";
 import { auth } from "./firebase";
 import { deleteProfile } from "./profile";
+import { deleteAllWeights } from "./weight";
 
 export async function deleteAccount(password: string): Promise<void> {
     const user = auth.currentUser;
@@ -22,6 +23,7 @@ export async function deleteAccount(password: string): Promise<void> {
     // permission needed to delete the documents.
     await deleteAllEntries();
     await deleteProfile();
+    await deleteAllWeights();
 
     await deleteUser(user);
 }
