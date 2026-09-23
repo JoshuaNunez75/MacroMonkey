@@ -174,13 +174,23 @@ export default function Index() {
       >
         <View style={styles.appBar}>
           <Text style={styles.appName}>MacroMonkey</Text>
-          <Pressable
-            style={styles.iconButton}
-            onPress={() => router.push("/settings")}
-            hitSlop={8}
-          >
-            <Ionicons name="settings-outline" size={20} color={colors.text} />
-          </Pressable>
+          <View style={styles.appBarActions}>
+            <Pressable
+              style={styles.iconButton}
+              onPress={() => router.push("/weight")}
+              hitSlop={8}
+            >
+              <Ionicons name="trending-up" size={20} color={colors.text} />
+            </Pressable>
+
+            <Pressable
+              style={styles.iconButton}
+              onPress={() => router.push("/settings")}
+              hitSlop={8}
+            >
+              <Ionicons name="settings-outline" size={20} color={colors.text} />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.weekRow}>
@@ -542,6 +552,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+  },
+  appBarActions: {
+    flexDirection: "row",
+    gap: 10,
   },
   iconButton: {
     width: 40,
