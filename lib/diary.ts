@@ -328,3 +328,12 @@ export async function recentFoods(max = 15): Promise<RecentFood[]> {
 
     return result;
 }
+
+export function mealBreakdownFor(entries: LoggedEntry[]) {
+    return groupByMeal(entries).map((group) => ({
+        key: group.key,
+        label: group.label,
+        entryCount: group.entries.length,
+        totals: totalsFor(group.entries),
+    }));
+}

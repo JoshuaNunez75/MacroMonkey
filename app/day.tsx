@@ -8,6 +8,7 @@ import {
     fullDateFor,
     getEntries,
     LoggedEntry,
+    mealBreakdownFor,
     microTotalsFor,
     todayKey,
     totalsFor,
@@ -60,6 +61,24 @@ function SplitBar({ title, parts }: { title: string; parts: Part[] }) {
     );
 }
 
+function goalPercent(value: number, goal: number) {
+    if (goal <= 0) {
+        return 0;
+    }
+    return Math.round((value / goal) * 100);
+}
+
+function MealBar({ fraction, color }: { fraction: number; color: string }) {
+    const filled = Math.min(1, Math.max(0, fraction));
+
+    return (
+        <View style={styles.mealTrack}>
+            <View style={{ flex: filled, backgroundColor: color }} />
+            <View style={{ flex: 1 - filled }} />
+        </View>
+    );
+}
+
 export default function DayDetail() {
     const router = useRouter();
     const { date } = useLocalSearchParams<{ date?: string }>();
@@ -93,6 +112,7 @@ export default function DayDetail() {
     const totals = totalsFor(entries);
     const targets = macroGrams(profile);
     const microTotals = microTotalsFor(entries);
+    const mealRows = mealBreakdownFor(entries);
 
     const actualParts: Part[] = [
         {
@@ -245,6 +265,74 @@ export default function DayDetail() {
                         </View>
                     ))}
                 </View>
+
+                {mealRows.length > 0 ? (
+                    <>
+                        <Text style={styles.sectionTitle}>By Meal</Text>
+                        <Text style={styles.sectionNote}>
+                            How much of each goal every meal used
+                        </Text>
+
+                        <View style={styles.mealList}>
+                            {mealRows.map((meal) => (
+                                <View key={meal.key} style={styles.mealCard}>
+                                    <View style={styles.mealHead}>
+                                        <Text style={styles.mealName}>{meal.label}</Text>
+                                        <Text style={styles.mealCalories}>
+                                            {Math.round(meal.totals.calories).toLocaleString()} cal
+                                        </Text>
+                                        <Text style={styles.mealPercent}>
+                                            {goalPercent(meal.totals.calories, profile.calorieGoal)}%
+                                        </Text>
+                                    </View>
+
+                                    <MealBar
+                                        fraction={
+                                            profile.calorieGoal > 0
+                                                ? meal.totals.calories / profile.calorieGoal
+                                                : 0
+                                        }
+                                        color={colors.calories}
+                                    />
+
+                                    <View style={styles.mealMacros}>
+                                        {[
+                                            {
+                                                label: "P",
+                                                grams: meal.totals.protein,
+                                                goal: targets.protein,
+                                                color: colors.protein,
+                                            },
+                                            {
+                                                label: "C",
+                                                grams: meal.totals.carbs,
+                                                goal: targets.carbs,
+                                                color: colors.carbs,
+                                            },
+                                            {
+                                                label: "F",
+                                                grams: meal.totals.fat,
+                                                goal: targets.fat,
+                                                color: colors.fat,
+                                            },
+                                        ].map((macro) => (
+                                            <Text
+                                                key={macro.label}
+                                                style={[styles.mealMacro, { color: macro.color }]}
+                                            >
+                                                {macro.label} {formatGrams(macro.grams)}g
+                                                <Text style={styles.mealMacroPercent}>
+                                                    {"  "}
+                                                    {goalPercent(macro.grams, macro.goal)}%
+                                                </Text>
+                                            </Text>
+                                        ))}
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </>
+                ) : null}
 
                 {contributors.length > 0 ? (
                     <>
@@ -412,6 +500,63 @@ const styles = StyleSheet.create({
     },
     legendText: {
         fontSize: 13,
+        color: colors.muted,
+    },
+    mealList: {
+        gap: 10,
+        marginTop: 12,
+    },
+    mealCard: {
+        backgroundColor: colors.card,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: 16,
+    },
+    mealHead: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+    },
+    mealName: {
+        flex: 1,
+        fontSize: 13,
+        fontWeight: "700",
+        color: colors.text,
+        textTransform: "uppercase",
+        letterSpacing: 0.6,
+    },
+    mealCalories: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: colors.calories,
+    },
+    mealPercent: {
+        fontSize: 13,
+        color: colors.muted,
+        width: 44,
+        textAlign: "right",
+    },
+    mealTrack: {
+        flexDirection: "row",
+        height: 8,
+        borderRadius: 999,
+        overflow: "hidden",
+        backgroundColor: colors.border,
+        marginTop: 12,
+    },
+    mealMacros: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 12,
+    },
+    mealMacro: {
+        fontSize: 13,
+        fontWeight: "700",
+    },
+    mealMacroPercent: {
+        fontSize: 12,
+        fontWeight: "600",
         color: colors.muted,
     },
     table: {
