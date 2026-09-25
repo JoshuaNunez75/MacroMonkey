@@ -11,9 +11,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { deleteAccount } from "../lib/account";
-import { messageForAuthError, signOutUser } from "../lib/auth";
-import { colors } from "../lib/colors";
+import { deleteAccount } from "../../lib/account";
+import { messageForAuthError, signOutUser } from "../../lib/auth";
+import { colors } from "../../lib/colors";
 import {
   ACTIVITY_LEVELS,
   ActivityKey,
@@ -25,7 +25,7 @@ import {
   saveProfile,
   Sex,
   suggestedCalories,
-} from "../lib/profile";
+} from "../../lib/profile";
 
 type MacroKey = "protein" | "carbs" | "fat";
 
@@ -78,7 +78,6 @@ function percentFor(calories: number, grams: number, kcal: number) {
 }
 
 export default function Settings() {
-  const router = useRouter();
 
   const [calories, setCalories] = useState(String(DEFAULT_PROFILE.calorieGoal));
   const [macros, setMacros] = useState<
@@ -89,6 +88,7 @@ export default function Settings() {
     fat: { pct: "30", g: "0" },
   });
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -231,7 +231,8 @@ export default function Settings() {
       weeklyChangeLb: body.weeklyChangeLb,
     });
     setSaving(false);
-    router.back();
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
   }
 
   function openDeleteConfirm() {
@@ -264,15 +265,11 @@ export default function Settings() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <StatusBar style="light" />
 
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.back}>Cancel</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Goals</Text>
-        <View style={styles.headerSpacer} />
+        <Text style={styles.screenTitle}>Goals</Text>
       </View>
 
       <ScrollView
@@ -480,7 +477,7 @@ export default function Settings() {
           disabled={saving}
         >
           <Text style={styles.saveButtonText}>
-            {saving ? "Saving…" : "Save goals"}
+            {saving ? "Saving…" : justSaved ? "Saved" : "Save goals"}
           </Text>
         </Pressable>
 
@@ -530,7 +527,7 @@ export default function Settings() {
               style={[
                 styles.modalDelete,
                 (deleteBusy || deletePassword === "") &&
-                  styles.modalDeleteDisabled,
+                styles.modalDeleteDisabled,
               ]}
               onPress={confirmDelete}
               disabled={deleteBusy || deletePassword === ""}
@@ -561,11 +558,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     marginTop: 8,
-    marginBottom: 12,
+    marginBottom: 4,
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: colors.text,
   },
   back: {
     fontSize: 16,

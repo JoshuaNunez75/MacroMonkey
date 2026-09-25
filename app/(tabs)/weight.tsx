@@ -16,8 +16,8 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "../lib/colors";
-import { dateFromKey, dateKeyFor, dateLabelFor, todayKey } from "../lib/diary";
+import { colors } from "../../lib/colors";
+import { dateFromKey, dateKeyFor, dateLabelFor, todayKey } from "../../lib/diary";
 import {
     deleteWeight,
     getWeights,
@@ -25,7 +25,7 @@ import {
     saveWeight,
     summaryFor,
     WeightEntry,
-} from "../lib/weight";
+} from "../../lib/weight";
 import Svg, { Circle, Polyline, Text as SvgText } from "react-native-svg";
 
 const CHART_H = 170;
@@ -124,7 +124,6 @@ function WeightChart({ entries }: { entries: WeightEntry[] }) {
 }
 
 export default function Weight() {
-    const router = useRouter();
     const [entries, setEntries] = useState<WeightEntry[]>([]);
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
@@ -190,14 +189,8 @@ export default function Weight() {
     }
 
     return (
-        <SafeAreaView style={styles.screen}>
+        <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
             <StatusBar style="light" />
-
-            <View style={styles.header}>
-                <Pressable onPress={() => router.back()} hitSlop={12}>
-                    <Text style={styles.back}>Back</Text>
-                </Pressable>
-            </View>
 
             <ScrollView
                 contentContainerStyle={styles.content}
@@ -392,7 +385,8 @@ const styles = StyleSheet.create({
         color: colors.calories,
     },
     content: {
-        paddingBottom: 48,
+        paddingTop: 8,
+        paddingBottom: 24,
     },
     title: {
         fontSize: 28,

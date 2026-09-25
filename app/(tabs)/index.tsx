@@ -8,8 +8,8 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { PanResponder, Platform } from "react-native";
-import { Ring } from "../components/Ring";
-import { colors } from "../lib/colors";
+import { Ring } from "../../components/Ring";
+import { colors } from "../../lib/colors";
 import {
   dateFromKey,
   dateKeyFor,
@@ -26,15 +26,15 @@ import {
   shiftDateKey,
   todayKey,
   totalsFor,
-} from "../lib/diary";
-import { formatGrams } from "../lib/format";
-import { useCountUp } from "../lib/useCountUp";
+} from "../../lib/diary";
+import { formatGrams } from "../../lib/format";
+import { useCountUp } from "../../lib/useCountUp";
 import {
   DEFAULT_PROFILE,
   loadProfile,
   macroGrams,
   Profile,
-} from "../lib/profile";
+} from "../../lib/profile";
 
 function MacroRing({
   label,
@@ -165,7 +165,7 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
       <StatusBar style="light" />
       <ScrollView
         style={styles.scroll}
@@ -174,23 +174,6 @@ export default function Index() {
       >
         <View style={styles.appBar}>
           <Text style={styles.appName}>MacroMonkey</Text>
-          <View style={styles.appBarActions}>
-            <Pressable
-              style={styles.iconButton}
-              onPress={() => router.push("/weight")}
-              hitSlop={8}
-            >
-              <Ionicons name="trending-up" size={20} color={colors.text} />
-            </Pressable>
-
-            <Pressable
-              style={styles.iconButton}
-              onPress={() => router.push("/settings")}
-              hitSlop={8}
-            >
-              <Ionicons name="settings-outline" size={20} color={colors.text} />
-            </Pressable>
-          </View>
         </View>
 
         <View style={styles.weekRow}>
@@ -515,7 +498,7 @@ export default function Index() {
         )}
 
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 
@@ -530,7 +513,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 48,
+    paddingBottom: 24,
   },
   appBar: {
     flexDirection: "row",
