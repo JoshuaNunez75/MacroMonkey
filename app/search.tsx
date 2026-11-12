@@ -20,16 +20,41 @@ import { formatGrams } from "../lib/format";
 
 const DEBOUNCE_MS = 400;
 
-function FoodRow({ food, onPress }: { food: Food; onPress: () => void }) {
+function FoodRow({
+    food,
+    selected,
+    onPress,
+    onToggle,
+}: {
+    food: Food;
+    selected: boolean;
+    onPress: () => void;
+    onToggle: () => void;
+}) {
     const serving = food.servings[0];
 
     return (
-        <Pressable style={styles.row} onPress={onPress}>
-            <Text style={styles.rowName} numberOfLines={1}>
-                {food.name}
-            </Text>
-            {food.brand ? <Text style={styles.rowBrand}>{food.brand}</Text> : null}
-            <Text style={styles.rowServing}>{serving.description}</Text>
+        <Pressable
+            style={[styles.row, selected ? styles.rowSelected : null]}
+            onPress={onPress}
+        >
+            <View style={styles.rowTop}>
+                <View style={styles.rowInfo}>
+                    <Text style={styles.rowName} numberOfLines={2}>
+                        {food.name}
+                    </Text>
+                    {food.brand ? <Text style={styles.rowBrand}>{food.brand}</Text> : null}
+                    <Text style={styles.rowServing}>{serving.description}</Text>
+                </View>
+
+                <Pressable
+                    onPress={onToggle}
+                    hitSlop={14}
+                    style={[styles.check, selected ? styles.checkOn : null]}
+                >
+                    {selected ? <Text style={styles.checkMark}>✓</Text> : null}
+                </Pressable>
+            </View>
 
             <View style={styles.rowMacros}>
                 <Text style={[styles.macro, { color: colors.calories }]}>
@@ -103,6 +128,24 @@ export default function Search() {
     const [error, setError] = useState<string | null>(null);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [recent, setRecent] = useState<RecentFood[]>([]);
+    const [selected, setSelected] = useState<Food[]>([]);
+
+    function isSelected(food: Food) {
+        return selected.some((item) => item.id === food.id);
+    }
+
+    function toggleSelected(food: Food) {
+        setSelected((current) =>
+            current.some((item) => item.id === food.id)
+                ? current.filter((item) => item.id !== food.id)
+                : [...current, food]
+        );
+    }
+
+    const selectedCalories = selected.reduce(
+        (sum, food) => sum + food.servings[0].calories,
+        0
+    );
 
     useEffect(() => {
         let cancelled = false;
@@ -232,7 +275,12 @@ export default function Search() {
                 data={results}
                 keyExtractor={(food) => food.id}
                 renderItem={({ item }) => (
-                    <FoodRow food={item} onPress={() => router.push(foodHref(item.id))} />
+                    <FoodRow
+                        food={item}
+                        selected={isSelected(item)}
+                        onPress={() => router.push(foodHref(item.id))}
+                        onToggle={() => toggleSelected(item)}
+                    />
                 )}
                 ListHeaderComponent={renderSuggestions()}
                 ListEmptyComponent={<Text style={styles.hint}>No results found</Text>}
@@ -281,6 +329,27 @@ export default function Search() {
 
 
             <View style={styles.body}>{renderBody()}</View>
+
+            {selected.length > 0 ? (
+                <View style={styles.selectionBar}>
+                    <View>
+                        <Text style={styles.selectionCount}>
+                            {selected.length} selected
+                        </Text>
+                        <Text style={styles.selectionHint}>
+                            about {Math.round(selectedCalories)} cal
+                        </Text>
+                    </View>
+
+                    <Pressable
+                        style={styles.selectionButton}
+                        onPress={() => setSelected([])}
+                    >
+                        <Text style={styles.selectionButtonText}>Clear</Text>
+                    </Pressable>
+                </View>
+            ) : null}
+
             <FatSecretAttribution />
         </SafeAreaView>
     );
@@ -389,6 +458,70 @@ const styles = StyleSheet.create({
         borderColor: colors.border,
         padding: 16,
         marginBottom: 10,
+    },
+    rowSelected: {
+        borderColor: colors.calories,
+    },
+    rowTop: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 12,
+    },
+    rowInfo: {
+        flex: 1,
+    },
+    check: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        borderWidth: 2,
+        borderColor: colors.border,
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: 2,
+    },
+    checkOn: {
+        backgroundColor: colors.calories,
+        borderColor: colors.calories,
+    },
+    checkMark: {
+        color: colors.bg,
+        fontSize: 14,
+        fontWeight: "800",
+    },
+    selectionBar: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 14,
+        paddingVertical: 12,
+        paddingLeft: 16,
+        paddingRight: 12,
+        marginBottom: 10,
+    },
+    selectionCount: {
+        color: colors.text,
+        fontSize: 15,
+        fontWeight: "700",
+    },
+    selectionHint: {
+        color: colors.muted,
+        fontSize: 13,
+        marginTop: 2,
+    },
+    selectionButton: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 999,
+        backgroundColor: colors.pill,
+    },
+    selectionButtonText: {
+        color: colors.text,
+        fontSize: 14,
+        fontWeight: "600",
     },
     rowName: {
         color: colors.text,
