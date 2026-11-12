@@ -1,5 +1,6 @@
 import {
     createUserWithEmailAndPassword,
+    sendPasswordResetEmail,
     signInWithEmailAndPassword,
     signOut,
 } from "firebase/auth";
@@ -43,4 +44,24 @@ export async function signIn(email: string, password: string) {
 
 export async function signOutUser() {
     await signOut(auth);
+}
+
+export async function sendPasswordReset(email: string) {
+    try {
+        await sendPasswordResetEmail(auth, email.trim());
+    } catch (error) {
+        const code =
+            typeof error === "object" && error !== null && "code" in error
+                ? String((error as { code: unknown }).code)
+                : "";
+
+        // Swallow this one on purpose: reporting it would tell an attacker
+        // which email addresses have accounts. The caller shows the same
+        // message either way.
+        if (code === "auth/user-not-found") {
+            return;
+        }
+
+        throw error;
+    }
 }

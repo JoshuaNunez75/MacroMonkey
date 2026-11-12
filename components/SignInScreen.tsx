@@ -10,7 +10,12 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { messageForAuthError, signIn, signUp } from "../lib/auth";
+import {
+    messageForAuthError,
+    sendPasswordReset,
+    signIn,
+    signUp,
+} from "../lib/auth";
 import { colors } from "../lib/colors";
 import { FatSecretAttribution } from "./FatSecretAttribution";
 
@@ -20,10 +25,35 @@ export function SignInScreen() {
     const [password, setPassword] = useState("");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
+
+    async function resetPassword() {
+        if (email.trim() === "") {
+            setNotice(null);
+            setError("Enter your email address first.");
+            return;
+        }
+
+        setBusy(true);
+        setError(null);
+        setNotice(null);
+
+        try {
+            await sendPasswordReset(email);
+            setNotice(
+                "If an account exists for that email, a reset link is on its way."
+            );
+        } catch (e) {
+            setError(messageForAuthError(e));
+        } finally {
+            setBusy(false);
+        }
+    }
 
     async function submit() {
         setBusy(true);
         setError(null);
+        setNotice(null);
 
         try {
             if (creating) {
@@ -72,6 +102,7 @@ export function SignInScreen() {
                     textContentType={creating ? "newPassword" : "password"}
                 />
 
+                {notice ? <Text style={styles.notice}>{notice}</Text> : null}
                 {error ? <Text style={styles.error}>{error}</Text> : null}
 
                 <Pressable
@@ -84,10 +115,22 @@ export function SignInScreen() {
                     </Text>
                 </Pressable>
 
+                {creating ? null : (
+                    <Pressable
+                        onPress={resetPassword}
+                        disabled={busy}
+                        hitSlop={8}
+                        style={styles.forgot}
+                    >
+                        <Text style={styles.forgotText}>Forgot your password?</Text>
+                    </Pressable>
+                )}
+
                 <Pressable
                     onPress={() => {
                         setCreating(!creating);
                         setError(null);
+                        setNotice(null);
                     }}
                     hitSlop={8}
                     style={styles.toggle}
@@ -142,6 +185,12 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         lineHeight: 19,
     },
+    notice: {
+        fontSize: 14,
+        color: colors.calories,
+        marginBottom: 12,
+        lineHeight: 19,
+    },
     button: {
         backgroundColor: colors.calories,
         borderRadius: 14,
@@ -156,6 +205,16 @@ const styles = StyleSheet.create({
         color: colors.bg,
         fontSize: 16,
         fontWeight: "700",
+    },
+    forgot: {
+        alignSelf: "center",
+        marginTop: 16,
+        paddingVertical: 6,
+    },
+    forgotText: {
+        fontSize: 14,
+        color: colors.muted,
+        fontWeight: "600",
     },
     toggle: {
         alignSelf: "center",
