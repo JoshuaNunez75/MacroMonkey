@@ -223,7 +223,7 @@ export default function Weight() {
                                 ).toFixed(1)}`
                                 : "—"}
                         </Text>
-                        <Text style={styles.summaryLabel}>CHANGE</Text>
+                        <Text style={styles.summaryLabel}>SINCE START</Text>
                     </View>
                 </View>
 
