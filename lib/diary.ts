@@ -137,6 +137,28 @@ export async function addEntry(
     return { ...entry, id: reference.id };
 }
 
+export async function addEntries(
+    entries: Omit<LoggedEntry, "id">[]
+): Promise<LoggedEntry[]> {
+    if (entries.length === 0) {
+        return [];
+    }
+
+    const target = entriesCollection();
+    const batch = writeBatch(db);
+    const created: LoggedEntry[] = [];
+
+    for (const entry of entries) {
+        const reference = doc(target);
+        batch.set(reference, entry);
+        created.push({ ...entry, id: reference.id });
+    }
+
+    await batch.commit();
+
+    return created;
+}
+
 export async function deleteEntry(date: string, id: string): Promise<void> {
     await deleteDoc(entryDoc(id));
 }
