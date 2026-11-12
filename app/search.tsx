@@ -147,6 +147,19 @@ export default function Search() {
         0
     );
 
+    function openReview() {
+        const params: { ids: string; date?: string; meal?: string } = {
+            ids: selected.map((food) => food.id).join(","),
+        };
+        if (date) {
+            params.date = date;
+        }
+        if (meal) {
+            params.meal = meal;
+        }
+        router.push({ pathname: "/review", params });
+    }
+
     useEffect(() => {
         let cancelled = false;
 
@@ -341,12 +354,18 @@ export default function Search() {
                         </Text>
                     </View>
 
-                    <Pressable
-                        style={styles.selectionButton}
-                        onPress={() => setSelected([])}
-                    >
-                        <Text style={styles.selectionButtonText}>Clear</Text>
-                    </Pressable>
+                    <View style={styles.selectionActions}>
+                        <Pressable
+                            style={styles.selectionButton}
+                            onPress={() => setSelected([])}
+                        >
+                            <Text style={styles.selectionButtonText}>Clear</Text>
+                        </Pressable>
+
+                        <Pressable style={styles.reviewButton} onPress={openReview}>
+                            <Text style={styles.reviewButtonText}>Review</Text>
+                        </Pressable>
+                    </View>
                 </View>
             ) : null}
 
@@ -512,11 +531,27 @@ const styles = StyleSheet.create({
         fontSize: 13,
         marginTop: 2,
     },
+    selectionActions: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
     selectionButton: {
         paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: 999,
         backgroundColor: colors.pill,
+    },
+    reviewButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 999,
+        backgroundColor: colors.calories,
+    },
+    reviewButtonText: {
+        color: colors.bg,
+        fontSize: 14,
+        fontWeight: "700",
     },
     selectionButtonText: {
         color: colors.text,
